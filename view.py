@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 import sys
 import math
 import Image
@@ -20,8 +21,9 @@ spin = 0.0
 textures = {}
 picture_display_lists = {}
 mozaic_display_lists = {}
-mozaic_factory = MozaicFactory.load("mosaic.pickle")
-nb_segments = 45
+mozaic_factory = MozaicFactory.load(os.path.join(sys.argv[1], "mosaic.pickle"))
+mozaic_factory.images = mozaic_factory.images[:30]
+nb_segments = 40
 ratio = 4. / 3.
 size = 100 / float(nb_segments)
 
@@ -30,10 +32,6 @@ current_tile_picture = iterator.next()
 current_mozaic_picture = iterator.next()
 
 def findPictureInMozaic(picture, mozaic):
-#    print "+" * 80
-#    print picture.path
-#    for line in mozaic:
-#        print " | ".join(map(lambda x: x.path, line))
     x = -1
     for y, line in enumerate(mozaic):
         if picture in line:
@@ -41,13 +39,9 @@ def findPictureInMozaic(picture, mozaic):
             break
     if x == -1:
         raise Exception("picture not in mozaic")
-#    print len(mozaic) - x - 1, len(mozaic) - y - 1
-#    print "-" * 80
     return (x, len(mozaic) - y - 1)
 
-#start_picture_coord = (0, 0)
-start_picture_coord = findPictureInMozaic(current_tile_picture, mozaic_factory.mozaic(current_mozaic_picture, nb_segments, fast=True))
-
+start_picture_coord = findPictureInMozaic(current_tile_picture, mozaic_factory.mozaic(current_mozaic_picture, nb_segments))
 def loadTexture(name):
     image = Image.open(name)
 
@@ -71,11 +65,6 @@ def loadTexture(name):
     
     return _id
 
-def generatePictureDisplayLists():
-    width  = ratio * size
-    height = size
-    for picture in mozaic_factory.images:
-        generatePictureDisplayList(picture, width, height)
 
 def generatePictureDisplayList(picture, width, height):
     dl = glGenLists(1)
@@ -84,22 +73,19 @@ def generatePictureDisplayList(picture, width, height):
     drawPicture(picture, 0, 0, width, height)
     glEndList()
 
-def generateMozaicDisplayList(picture, fast=False):
+def generateMozaicDisplayList(picture):
     dl = glGenLists(1)
     mozaic_display_lists[picture] = dl
     glNewList(dl, GL_COMPILE)
-    drawMozaic(picture, fast=fast)
+    drawMozaic(picture)
     glEndList()
 
-def drawMozaic(picture, fast=False):
-    m = mozaic_factory.mozaic(picture, nb_segments, fast=fast)
+def drawMozaic(picture):
+    m = mozaic_factory.mozaic(picture, nb_segments)
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
             glPushMatrix()
             glTranslatef(column * ratio * size, line * size, 0.0)
-            print column, line
-            print column * ratio * size, line * size
-#            glCallList(picture_display_lists[m[nb_segments - 1 - line][nb_segments - 1 - column]])
             glCallList(picture_display_lists[m[nb_segments - 1 - line][column]])
             glPopMatrix()
 
@@ -141,29 +127,19 @@ def display():
         start_picture_coord[0] * ((height * ratio) / (nb_segments - 1)),
         start_picture_coord[1] * (height / (nb_segments - 1))
     )
-#    print start_point
-#    start_point = (100.0 * ratio, 100.0 / (nb_segments - 1))
     center = ((height * ratio) / 2, height / 2)
     glClear(GL_COLOR_BUFFER_BIT)
     glPushMatrix()
-#    zoom = (0.9 * (1. - (spin / 360.)) + .1) * nb_segments
-#    zoom = (0.9 * (1. - (spin / 360.)) + .1)
     progress = 1 - spin / 360.
     max_zoom = nb_segments
     min_zoom = 1.0
-#    zoom = progress * (max_zoom - min_zoom) + min_zoom
-#    progress = sigmoid_0_1(progress)
     progress = fake_sigmoid(progress)
     cam_center = (
         start_point[0] + (center[0] - start_point[0]) * (1 - progress),
         start_point[1] + (center[1] - start_point[1]) * (1 - progress)
     )
-#    print cam_center
-#    progress = sin_0_1(progress)
     zoom = max_zoom ** progress
-#    print zoom
     glTranslatef(cam_center[0], cam_center[1], 0.0)
-#    glRotatef(spin, 0.0, 0.0, 1.0)
     glScalef(zoom, zoom, 1.0)
     glTranslatef(-cam_center[0], -cam_center[1], 0.0)
     if progress > 0.1:
@@ -171,12 +147,7 @@ def display():
     else:
         alpha = progress * 10.0
     glColor4f(0.0, 0.0, 0.0, alpha)
-#    print glutGet(GLUT_ELAPSED_TIME)
-#    glCallList(mozaic_display_lists[mozaic_factory.images[int(spin) % 3]])
     glCallList(mozaic_display_lists[current_mozaic_picture])
-#    glCallList(mozaic_display_lists[mozaic_factory.images[1]])
-#    glPopMatrix()
-#    glPushMatrix()
     glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
     glScalef(nb_segments, nb_segments, 1.0)
     glCallList(picture_display_lists[current_mozaic_picture])
@@ -188,29 +159,29 @@ def spinDisplay():
     global current_mozaic_picture
     global start_picture_coord
     duration = 10000.
-#    spin = spin + 2.0
-#    if(spin > 360.0):
-#        spin = spin - 360.0
     old_spin = spin
     spin = 360. * (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
     if spin < old_spin:
-        print "change"
         current_tile_picture = current_mozaic_picture
         current_mozaic_picture = iterator.next()
-        start_picture_coord = findPictureInMozaic(current_tile_picture, mozaic_factory.mozaic(current_mozaic_picture, nb_segments, fast=True))
+        start_picture_coord = findPictureInMozaic(current_tile_picture, mozaic_factory.mozaic(current_mozaic_picture, nb_segments))
     glutPostRedisplay()
 
 def init():
-    for img in mozaic_factory.images:
-        textures[img] = loadTexture(img.path)
-    generatePictureDisplayLists()
+    print "loading textures:"
     for i, img in enumerate(mozaic_factory.images):
-#        if i == 3:
-#            break
-        print i, "/", len(mozaic_factory.images)
-        generateMozaicDisplayList(img, fast=True)
-#    generateMozaicDisplayList(mozaic_factory.images[111], fast=True)
-#    generateMozaicDisplayList(mozaic_factory.images[111], fast=False)
+        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+        textures[img] = loadTexture(img.path)
+    width  = ratio * size
+    height = size
+    print "generating picture display lists:"
+    for i, picture in enumerate(mozaic_factory.images):
+        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+        generatePictureDisplayList(picture, width, height)
+    print "generating mosaic display lists:"
+    for i, img in enumerate(mozaic_factory.images):
+        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+        generateMozaicDisplayList(img)
 
     glEnable(GL_TEXTURE_2D)
     glEnable(GL_BLEND)

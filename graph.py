@@ -12,18 +12,13 @@ from pygraph.algorithms.accessibility import mutual_accessibility
 from mozaic import MozaicFactory, MozaicImage
 
 
-#def name(path):
-#    return path[path.find("/") + 1:path.find(".")]
-
-# Graph creation
-
-
 def transition_graph(mozaic_factory, nb_segments):
     gr = digraph()
     gr.add_nodes(mozaic_factory.images)
+    print "calculating transition graph:"
     for i, img in enumerate(mozaic_factory.images):
-        print i + 1 / len(mozaic_factory.images)
-        for line in mozaic_factory.mozaic(img, nb_segments, fast=True):
+        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+        for line in mozaic_factory.mozaic(img, nb_segments):
             for pic in line:
                 try:
                     gr.add_edge((pic, img))
