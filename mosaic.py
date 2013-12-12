@@ -31,7 +31,7 @@ class MozaicImage(object):
         return self.image.size[0] / float(self.image.size[1])
 
     def calculate_average_color(self):
-        return self.image.resize((1, 1), 1).getpixel((0,0))
+        return self.image.resize((1, 1), Image.ANTIALIAS).getpixel((0,0))
 
     def calculate_grid(self, nb_segments):
         self.load()
@@ -56,7 +56,7 @@ def render_mosaic(mosaic, width, height):
         for j, img in enumerate(line):
             img.load()
             res.paste(
-                img.image.resize((pane_width, pane_height)),
+                img.image.resize((pane_width, pane_height), Image.ANTIALIAS),
                 (j * pane_width, i * pane_height)
             )
             img.free()
