@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+import cPickle as pickle
 
 from os import listdir
 from os.path import join
-import cPickle as pickle
 from PIL import Image
 
 from memoized import memoized

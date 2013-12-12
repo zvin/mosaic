@@ -1,17 +1,18 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
+import math
 import os
 import sys
-import math
-import Image
 
-from mosaic import MozaicFactory
+from PIL import Image
+
 from graph import image_iterator
+from mosaic import MozaicFactory
 
 try:
-    from OpenGL.GLUT import *
     from OpenGL.GL import *
     from OpenGL.GLU import *
+    from OpenGL.GLUT import *
 except:
     print "ERROR: PyOpenGL not installed properly."
     sys.exit()

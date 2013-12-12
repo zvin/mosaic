@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from pygraph.classes.exceptions import AdditionError
-from pygraph.classes.digraph import digraph
 from pygraph.algorithms.accessibility import mutual_accessibility
+from pygraph.classes.digraph import digraph
+from pygraph.classes.exceptions import AdditionError
 
 from mosaic import MozaicFactory
 
