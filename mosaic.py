@@ -12,7 +12,7 @@ class MozaicImage(object):
     def __init__(self, path):
         self.path = path
         self.load()
-        self.average_color = self.calculate_average_color2()
+        self.average_color = self.calculate_average_color()
         self.ratio = self.calculate_ratio()
         self.free()
     
@@ -28,23 +28,9 @@ class MozaicImage(object):
         self.free()
 
     def calculate_ratio(self):
-        return self.image.size[0] / self.image.size[1]
+        return self.image.size[0] / float(self.image.size[1])
 
     def calculate_average_color(self):
-        red, green, blue = 0, 0, 0
-        for i in xrange(self.image.size[0]):
-            for j in xrange(self.image.size[1]):
-                r, g, b = self.image.getpixel((i, j))[:3]
-                red   += r
-                green += g
-                blue  += b
-        nb_pixels = float(self.image.size[0] * self.image.size[1])
-        red   /= nb_pixels
-        green /= nb_pixels
-        blue  /= nb_pixels
-        return map(lambda x: int(round(x)), (red, green, blue))
-    
-    def calculate_average_color2(self):
         return self.image.resize((1, 1), 1).getpixel((0,0))
 
     def calculate_grid(self, nb_segments):

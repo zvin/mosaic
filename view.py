@@ -24,7 +24,6 @@ mosaic_display_lists = {}
 mosaic_factory = MozaicFactory.load(os.path.join(sys.argv[1], "mosaic.pickle"))
 mosaic_factory.images = mosaic_factory.images[:30]
 nb_segments = 40
-ratio = 4. / 3.
 size = 100 / float(nb_segments)
 
 iterator = image_iterator(mosaic_factory, nb_segments)
@@ -85,7 +84,7 @@ def drawMozaic(picture):
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
             glPushMatrix()
-            glTranslatef(column * ratio * size, line * size, 0.0)
+            glTranslatef(column * mosaic_factory.ratio * size, line * size, 0.0)
             glCallList(picture_display_lists[m[nb_segments - 1 - line][column]])
             glPopMatrix()
 
@@ -124,10 +123,10 @@ def sin_0_1(value):
 def display():
     height = 100.0
     start_point = (
-        start_picture_coord[0] * ((height * ratio) / (nb_segments - 1)),
+        start_picture_coord[0] * ((height * mosaic_factory.ratio) / (nb_segments - 1)),
         start_picture_coord[1] * (height / (nb_segments - 1))
     )
-    center = ((height * ratio) / 2, height / 2)
+    center = ((height * mosaic_factory.ratio) / 2, height / 2)
     glClear(GL_COLOR_BUFFER_BIT)
     glPushMatrix()
     progress = 1 - spin / 360.
@@ -172,7 +171,7 @@ def init():
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
         textures[img] = loadTexture(img.path)
-    width  = ratio * size
+    width  = mosaic_factory.ratio * size
     height = size
     print "generating picture display lists:"
     for i, picture in enumerate(mosaic_factory.images):
