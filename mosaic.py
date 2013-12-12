@@ -7,6 +7,7 @@ from PIL import Image
 
 from memoized import memoized
 
+
 class MozaicImage(object):
     
     def __init__(self, path):
@@ -36,11 +37,12 @@ class MozaicImage(object):
     def calculate_grid(self, nb_segments):
         self.load()
         small = self.image.resize((nb_segments, nb_segments), Image.ANTIALIAS)
+        data = small.getdata()
         res = []
         for i in xrange(nb_segments):
             res.append([])
             for j in xrange(nb_segments):
-                res[-1].append(small.getpixel((j, i)))
+                res[-1].append(data[i * nb_segments + j])
         self.free()
         return res
 
