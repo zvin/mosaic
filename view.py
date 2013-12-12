@@ -5,7 +5,7 @@ import sys
 import math
 import Image
 
-from mosaic import MozaicFactory, MozaicImage
+from mosaic import MozaicFactory
 from graph import image_iterator
 
 try:
@@ -30,6 +30,7 @@ iterator = image_iterator(mosaic_factory, nb_segments)
 current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
 
+
 def findPictureInMozaic(picture, mosaic):
     x = -1
     for y, line in enumerate(mosaic):
@@ -40,7 +41,13 @@ def findPictureInMozaic(picture, mosaic):
         raise Exception("picture not in mosaic")
     return (x, len(mosaic) - y - 1)
 
-start_picture_coord = findPictureInMozaic(current_tile_picture, mosaic_factory.mosaic(current_mosaic_picture, nb_segments))
+
+start_picture_coord = findPictureInMozaic(
+    current_tile_picture,
+    mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
+)
+
+
 def loadTexture(name):
     image = Image.open(name)
 
@@ -52,8 +59,10 @@ def loadTexture(name):
     _id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, _id)   # 2d texture (x and y size)
 
-    glPixelStorei(GL_UNPACK_ALIGNMENT,1)
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, 3, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image
+    )
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
@@ -61,7 +70,6 @@ def loadTexture(name):
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
-    
     return _id
 
 
@@ -72,6 +80,7 @@ def generatePictureDisplayList(picture, width, height):
     drawPicture(picture, 0, 0, width, height)
     glEndList()
 
+
 def generateMozaicDisplayList(picture):
     dl = glGenLists(1)
     mosaic_display_lists[picture] = dl
@@ -79,35 +88,54 @@ def generateMozaicDisplayList(picture):
     drawMozaic(picture)
     glEndList()
 
+
 def drawMozaic(picture):
     m = mosaic_factory.mosaic(picture, nb_segments)
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
             glPushMatrix()
-            glTranslatef(column * mosaic_factory.ratio * size, line * size, 0.0)
-            glCallList(picture_display_lists[m[nb_segments - 1 - line][column]])
+            glTranslatef(
+                column * mosaic_factory.ratio * size,
+                line * size, 0.0
+            )
+            glCallList(
+                picture_display_lists[m[nb_segments - 1 - line][column]]
+            )
             glPopMatrix()
+
 
 def drawPicture(picture, x, y, width, height):
     glBindTexture(GL_TEXTURE_2D, textures[picture])
     glPushMatrix()
     glTranslatef(x, y, 0.0)
     glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 0.0); glVertex2f(0    , 0     )	# Bottom Left Of The Texture and Quad
-    glTexCoord2f(1.0, 0.0); glVertex2f(width, 0     )	# Bottom Right Of The Texture and Quad
-    glTexCoord2f(1.0, 1.0); glVertex2f(width, height)	# Top Right Of The Texture and Quad
-    glTexCoord2f(0.0, 1.0); glVertex2f(0    , height)
+    # Bottom Left Of The Texture and Quad:
+    glTexCoord2f(0.0, 0.0)
+    glVertex2f(0, 0)
+    # Bottom Right Of The Texture and Quad:
+    glTexCoord2f(1.0, 0.0)
+    glVertex2f(width, 0)
+    # Top Right Of The Texture and Quad:
+    glTexCoord2f(1.0, 1.0)
+    glVertex2f(width, height)
+    # Top Left Of The Texture and Quad:
+    glTexCoord2f(0.0, 1.0)
+    glVertex2f(0, height)
     glEnd()
     glPopMatrix()
+
 
 def sigmoid(value):
     return 1.0 / (1.0 + math.exp(-float(value)))
 
+
 def sigmoid_0_1(value):
     return sigmoid(value * 12.0 - 6.0)
 
+
 def fake_sigmoid(value):
-    if value == 0.0 or value == 1.0: return value
+    if value == 0.0 or value == 1.0:
+        return value
     delta = sigmoid_0_1(1) - sigmoid_0_1(0)
     res = sigmoid_0_1(value) / delta - sigmoid_0_1(0)
     if res < 0.0:
@@ -117,8 +145,6 @@ def fake_sigmoid(value):
     else:
         return res
 
-def sin_0_1(value):
-    return math.sin(value * (math.pi / 2))
 
 def display():
     height = 100.0
@@ -131,7 +157,6 @@ def display():
     glPushMatrix()
     progress = 1 - spin / 360.
     max_zoom = nb_segments
-    min_zoom = 1.0
     progress = fake_sigmoid(progress)
     cam_center = (
         start_point[0] + (center[0] - start_point[0]) * (1 - progress),
@@ -153,6 +178,7 @@ def display():
     glPopMatrix()
     glutSwapBuffers()
 
+
 def spinDisplay():
     global spin
     global current_mosaic_picture
@@ -163,15 +189,19 @@ def spinDisplay():
     if spin < old_spin:
         current_tile_picture = current_mosaic_picture
         current_mosaic_picture = iterator.next()
-        start_picture_coord = findPictureInMozaic(current_tile_picture, mosaic_factory.mosaic(current_mosaic_picture, nb_segments))
+        start_picture_coord = findPictureInMozaic(
+            current_tile_picture,
+            mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
+        )
     glutPostRedisplay()
+
 
 def init():
     print "loading textures:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
         textures[img] = loadTexture(img.path)
-    width  = mosaic_factory.ratio * size
+    width = mosaic_factory.ratio * size
     height = size
     print "generating picture display lists:"
     for i, picture in enumerate(mosaic_factory.images):
@@ -188,6 +218,7 @@ def init():
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glShadeModel(GL_FLAT)
 
+
 def reshape(w, h):
     glViewport(0, 0, w, h)
     ratio = float(w) / h
@@ -198,6 +229,7 @@ def reshape(w, h):
 #    glOrtho(0.0, w, 0.0, h, -1.0, 1.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
+
 
 def mouse(button, state, x, y):
     if button == GLUT_LEFT_BUTTON:
@@ -220,4 +252,3 @@ glutDisplayFunc(display)
 glutReshapeFunc(reshape)
 glutMouseFunc(mouse)
 glutMainLoop()
-

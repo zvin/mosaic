@@ -1,15 +1,10 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2007-2008 Pedro Matiello <pmatiello@gmail.com>
-# License: MIT (see COPYING file)
-
-# Import pygraph
 from pygraph.classes.exceptions import AdditionError
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.accessibility import mutual_accessibility
-#from pygraph.readwrite.dot import write
 
-from mosaic import MozaicFactory, MozaicImage
+from mosaic import MozaicFactory
 
 
 def transition_graph(mosaic_factory, nb_segments):
@@ -26,6 +21,7 @@ def transition_graph(mosaic_factory, nb_segments):
                     pass
     return gr
 
+
 def biggest_strongly_connected_component(g):
     ma = mutual_accessibility(g)
     max_component = []
@@ -39,9 +35,11 @@ def biggest_strongly_connected_component(g):
             g2.add_edge(edge)
     return g2
 
+
 def init_visited(g):
     for node in g.nodes():
         g.add_node_attribute(node, ("visited", 0))
+
 
 def next_node(g, node):
     next = None
@@ -53,20 +51,23 @@ def next_node(g, node):
     g.node_attributes(next)[0] = ("visited", g.node_attributes(next)[0][1] + 1)
     return next
 
+
 def image_iterator(mosaic_factory, nb_segments):
     gr = transition_graph(mosaic_factory, nb_segments)
     c = biggest_strongly_connected_component(gr)
     init_visited(c)
+
     def it(graph, node):
         while True:
             yield node
             node = next_node(graph, node)
+
     return it(c, c.nodes()[0])
 
-if __name__ == "__main__":
-    mosaic_factory = MozaicFactory.load("mosaic.pickle")
-    nb_segments = 4
-    it = image_iterator(mosaic_factory, nb_segments)
-    #dot = write(gr)
-    #open("test.dot", "w").write(dot)
 
+if __name__ == "__main__":
+    from pygraph.readwrite.dot import write
+    mosaic_factory = MozaicFactory.load("mosaic.pickle")
+    gr = transition_graph(mosaic_factory, 4)
+    with open("test.dot", "w") as _file:
+        _file.write(write(gr))

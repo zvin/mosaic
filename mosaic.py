@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from os import listdir
-from os.path import isfile, join
+from os.path import join
 import cPickle as pickle
 from PIL import Image
 
@@ -9,14 +9,14 @@ from memoized import memoized
 
 
 class MozaicImage(object):
-    
+
     def __init__(self, path):
         self.path = path
         self.load()
         self.average_color = self.calculate_average_color()
         self.ratio = self.calculate_ratio()
         self.free()
-    
+
     def load(self):
         self.image = Image.open(self.path).convert()
 
@@ -32,7 +32,7 @@ class MozaicImage(object):
         return self.image.size[0] / float(self.image.size[1])
 
     def calculate_average_color(self):
-        return self.image.resize((1, 1), Image.ANTIALIAS).getpixel((0,0))
+        return self.image.resize((1, 1), Image.ANTIALIAS).getpixel((0, 0))
 
     def calculate_grid(self, nb_segments):
         self.load()
@@ -46,8 +46,10 @@ class MozaicImage(object):
         self.free()
         return res
 
+
 def color_difference(clr1, clr2):
     return sum(map(lambda (x1, x2): abs(x1 - x2), zip(clr1, clr2)))
+
 
 def render_mosaic(mosaic, width, height):
     nb_segments = len(mosaic)
@@ -65,6 +67,7 @@ def render_mosaic(mosaic, width, height):
             print "%3d/%3d" % (i * nb_segments + j, nb_segments**2)
     return res
 
+
 def find_nearest_image(color, images):
     nearest = None
     nearest_delta = 1000
@@ -75,11 +78,12 @@ def find_nearest_image(color, images):
             nearest = img
     return nearest
 
+
 class MozaicFactory(object):
     def __init__(self):
         self.ratio = None
         self.images = []
-    
+
     @memoized
     def mosaic(self, image, nb_segments):
         available_images = set(self.images)
@@ -96,12 +100,12 @@ class MozaicFactory(object):
     def save(self, fname):
         with open(fname, "w") as _file:
             pickle.dump(self, _file)
-    
+
     @staticmethod
     def load(fname):
         with open(fname, "r") as _file:
             return pickle.load(_file)
-    
+
     def load_folder(self, folder):
         files = listdir(folder)
         for i, fname in enumerate(files):
@@ -118,12 +122,11 @@ class MozaicFactory(object):
                     self.images.append(img)
 
 if __name__ == "__main__":
-    import os
     from sys import argv
     folder = argv[1]
     factory = MozaicFactory()
     factory.load_folder(folder)
-    factory.save(os.path.join(folder, "mosaic.pickle"))
+    factory.save(join(folder, "mosaic.pickle"))
 
 #    m = MozaicFactory.load("mosaic.pickle")
 #    a = m.mosaic(m.images[105], 40)
