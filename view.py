@@ -5,7 +5,7 @@ import sys
 import math
 import Image
 
-from mozaic import MozaicFactory, MozaicImage
+from mosaic import MozaicFactory, MozaicImage
 from graph import image_iterator
 
 try:
@@ -20,28 +20,28 @@ except:
 spin = 0.0
 textures = {}
 picture_display_lists = {}
-mozaic_display_lists = {}
-mozaic_factory = MozaicFactory.load(os.path.join(sys.argv[1], "mosaic.pickle"))
-mozaic_factory.images = mozaic_factory.images[:30]
+mosaic_display_lists = {}
+mosaic_factory = MozaicFactory.load(os.path.join(sys.argv[1], "mosaic.pickle"))
+mosaic_factory.images = mosaic_factory.images[:30]
 nb_segments = 40
 ratio = 4. / 3.
 size = 100 / float(nb_segments)
 
-iterator = image_iterator(mozaic_factory, nb_segments)
+iterator = image_iterator(mosaic_factory, nb_segments)
 current_tile_picture = iterator.next()
-current_mozaic_picture = iterator.next()
+current_mosaic_picture = iterator.next()
 
-def findPictureInMozaic(picture, mozaic):
+def findPictureInMozaic(picture, mosaic):
     x = -1
-    for y, line in enumerate(mozaic):
+    for y, line in enumerate(mosaic):
         if picture in line:
             x = line.index(picture)
             break
     if x == -1:
-        raise Exception("picture not in mozaic")
-    return (x, len(mozaic) - y - 1)
+        raise Exception("picture not in mosaic")
+    return (x, len(mosaic) - y - 1)
 
-start_picture_coord = findPictureInMozaic(current_tile_picture, mozaic_factory.mozaic(current_mozaic_picture, nb_segments))
+start_picture_coord = findPictureInMozaic(current_tile_picture, mosaic_factory.mosaic(current_mosaic_picture, nb_segments))
 def loadTexture(name):
     image = Image.open(name)
 
@@ -75,13 +75,13 @@ def generatePictureDisplayList(picture, width, height):
 
 def generateMozaicDisplayList(picture):
     dl = glGenLists(1)
-    mozaic_display_lists[picture] = dl
+    mosaic_display_lists[picture] = dl
     glNewList(dl, GL_COMPILE)
     drawMozaic(picture)
     glEndList()
 
 def drawMozaic(picture):
-    m = mozaic_factory.mozaic(picture, nb_segments)
+    m = mosaic_factory.mosaic(picture, nb_segments)
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
             glPushMatrix()
@@ -147,40 +147,40 @@ def display():
     else:
         alpha = progress * 10.0
     glColor4f(0.0, 0.0, 0.0, alpha)
-    glCallList(mozaic_display_lists[current_mozaic_picture])
+    glCallList(mosaic_display_lists[current_mosaic_picture])
     glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
     glScalef(nb_segments, nb_segments, 1.0)
-    glCallList(picture_display_lists[current_mozaic_picture])
+    glCallList(picture_display_lists[current_mosaic_picture])
     glPopMatrix()
     glutSwapBuffers()
 
 def spinDisplay():
     global spin
-    global current_mozaic_picture
+    global current_mosaic_picture
     global start_picture_coord
     duration = 10000.
     old_spin = spin
     spin = 360. * (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
     if spin < old_spin:
-        current_tile_picture = current_mozaic_picture
-        current_mozaic_picture = iterator.next()
-        start_picture_coord = findPictureInMozaic(current_tile_picture, mozaic_factory.mozaic(current_mozaic_picture, nb_segments))
+        current_tile_picture = current_mosaic_picture
+        current_mosaic_picture = iterator.next()
+        start_picture_coord = findPictureInMozaic(current_tile_picture, mosaic_factory.mosaic(current_mosaic_picture, nb_segments))
     glutPostRedisplay()
 
 def init():
     print "loading textures:"
-    for i, img in enumerate(mozaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+    for i, img in enumerate(mosaic_factory.images):
+        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
         textures[img] = loadTexture(img.path)
     width  = ratio * size
     height = size
     print "generating picture display lists:"
-    for i, picture in enumerate(mozaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+    for i, picture in enumerate(mosaic_factory.images):
+        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
         generatePictureDisplayList(picture, width, height)
     print "generating mosaic display lists:"
-    for i, img in enumerate(mozaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
+    for i, img in enumerate(mosaic_factory.images):
+        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
         generateMozaicDisplayList(img)
 
     glEnable(GL_TEXTURE_2D)

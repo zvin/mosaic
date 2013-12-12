@@ -9,16 +9,16 @@ from pygraph.classes.digraph import digraph
 from pygraph.algorithms.accessibility import mutual_accessibility
 #from pygraph.readwrite.dot import write
 
-from mozaic import MozaicFactory, MozaicImage
+from mosaic import MozaicFactory, MozaicImage
 
 
-def transition_graph(mozaic_factory, nb_segments):
+def transition_graph(mosaic_factory, nb_segments):
     gr = digraph()
-    gr.add_nodes(mozaic_factory.images)
+    gr.add_nodes(mosaic_factory.images)
     print "calculating transition graph:"
-    for i, img in enumerate(mozaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mozaic_factory.images))
-        for line in mozaic_factory.mozaic(img, nb_segments):
+    for i, img in enumerate(mosaic_factory.images):
+        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
+        for line in mosaic_factory.mosaic(img, nb_segments):
             for pic in line:
                 try:
                     gr.add_edge((pic, img))
@@ -53,8 +53,8 @@ def next_node(g, node):
     g.node_attributes(next)[0] = ("visited", g.node_attributes(next)[0][1] + 1)
     return next
 
-def image_iterator(mozaic_factory, nb_segments):
-    gr = transition_graph(mozaic_factory, nb_segments)
+def image_iterator(mosaic_factory, nb_segments):
+    gr = transition_graph(mosaic_factory, nb_segments)
     c = biggest_strongly_connected_component(gr)
     init_visited(c)
     def it(graph, node):
@@ -64,9 +64,9 @@ def image_iterator(mozaic_factory, nb_segments):
     return it(c, c.nodes()[0])
 
 if __name__ == "__main__":
-    mozaic_factory = MozaicFactory.load("mosaic.pickle")
+    mosaic_factory = MozaicFactory.load("mosaic.pickle")
     nb_segments = 4
-    it = image_iterator(mozaic_factory, nb_segments)
+    it = image_iterator(mosaic_factory, nb_segments)
     #dot = write(gr)
     #open("test.dot", "w").write(dot)
 

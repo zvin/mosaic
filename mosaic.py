@@ -61,7 +61,7 @@ class MozaicImage(object):
 def color_difference(clr1, clr2):
     return sum(map(lambda (x1, x2): abs(x1 - x2), zip(clr1, clr2)))
 
-def render_mozaic(mosaic, width, height):
+def render_mosaic(mosaic, width, height):
     nb_segments = len(mosaic)
     pane_width = width / nb_segments
     pane_height = height / nb_segments
@@ -93,7 +93,7 @@ class MozaicFactory(object):
         self.images = []
     
     @memoized
-    def mozaic(self, image, nb_segments):
+    def mosaic(self, image, nb_segments):
         available_images = set(self.images)
         pixels = image.calculate_grid(nb_segments)
         res = []
@@ -138,8 +138,8 @@ if __name__ == "__main__":
     factory.save(os.path.join(folder, "mosaic.pickle"))
 
 #    m = MozaicFactory.load("mosaic.pickle")
-#    a = m.mozaic(m.images[105], 40)
-#    i = render_mozaic(a, 1024, 768)
+#    a = m.mosaic(m.images[105], 40)
+#    i = render_mosaic(a, 1024, 768)
 
     #for name in listdir(folder):
     #    path = join(folder, name)
