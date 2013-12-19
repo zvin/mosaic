@@ -18,16 +18,19 @@ except:
     sys.exit()
 
 
+spin = 0.0
 textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
 mosaic_factory = MosaicFactory.load(os.path.join(sys.argv[1]))
 mosaic_factory.save()
+#mosaic_factory.images = mosaic_factory.images[:30]
 nb_segments = 40
 size = 100 / float(nb_segments)
 
 iterator = image_iterator(mosaic_factory, nb_segments)
 current_tile_picture = iterator.next()
+current_mosaic_picture = iterator.next()
 
 
 def find_picture_in_mosaic(picture, mosaic):
@@ -39,6 +42,12 @@ def find_picture_in_mosaic(picture, mosaic):
     if x == -1:
         raise Exception("picture not in mosaic")
     return (x, len(mosaic) - y - 1)
+
+
+start_picture_coord = find_picture_in_mosaic(
+    current_tile_picture,
+    mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
+)
 
 
 def load_texture(name):
@@ -138,6 +147,56 @@ def fake_sigmoid(value):
         return res
 
 
+def display():
+    height = 100.0
+    start_point = (
+        start_picture_coord[0] * ((height * mosaic_factory.ratio) / (nb_segments - 1)),
+        start_picture_coord[1] * (height / (nb_segments - 1))
+    )
+    center = ((height * mosaic_factory.ratio) / 2, height / 2)
+    glClear(GL_COLOR_BUFFER_BIT)
+    glPushMatrix()
+    progress = 1 - spin
+    max_zoom = nb_segments
+    progress = fake_sigmoid(progress)
+    cam_center = (
+        start_point[0] + (center[0] - start_point[0]) * (1 - progress),
+        start_point[1] + (center[1] - start_point[1]) * (1 - progress)
+    )
+    zoom = max_zoom ** progress
+    glTranslatef(cam_center[0], cam_center[1], 0.0)
+    glScalef(zoom, zoom, 1.0)
+    glTranslatef(-cam_center[0], -cam_center[1], 0.0)
+    if progress > 0.1:
+        alpha = 1.0
+    else:
+        alpha = progress * 10.0
+    glColor4f(0.0, 0.0, 0.0, alpha)
+    glCallList(mosaic_display_lists[current_mosaic_picture])
+    glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
+    glScalef(nb_segments, nb_segments, 1.0)
+    glCallList(picture_display_lists[current_mosaic_picture])
+    glPopMatrix()
+    glutSwapBuffers()
+
+
+def spin_display():
+    global spin
+    global current_mosaic_picture
+    global start_picture_coord
+    duration = 10000.
+    old_spin = spin
+    spin = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
+    if spin < old_spin:
+        current_tile_picture = current_mosaic_picture
+        current_mosaic_picture = iterator.next()
+        start_picture_coord = find_picture_in_mosaic(
+            current_tile_picture,
+            mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
+        )
+    glutPostRedisplay()
+
+
 def init():
     print "loading textures:"
     for i, img in enumerate(mosaic_factory.images):
@@ -173,72 +232,15 @@ def reshape(w, h):
     glLoadIdentity()
 
 
-def start_drawing():
-    class DrawingState(object):
-        def __init__(self, spin, current_mosaic_picture):
-            self.spin = spin
-            self.current_mosaic_picture = current_mosaic_picture
-            self.start_picture_coord = find_picture_in_mosaic(
-                current_tile_picture,
-                mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
-            )
-
-    state = DrawingState(0, iterator.next())
-
-    def display():
-        height = 100.0
-        start_point = (
-            state.start_picture_coord[0] * ((height * mosaic_factory.ratio) / (nb_segments - 1)),
-            state.start_picture_coord[1] * (height / (nb_segments - 1))
-        )
-        center = ((height * mosaic_factory.ratio) / 2, height / 2)
-        glClear(GL_COLOR_BUFFER_BIT)
-        glPushMatrix()
-        progress = 1 - state.spin
-        max_zoom = nb_segments
-        progress = fake_sigmoid(progress)
-        cam_center = (
-            start_point[0] + (center[0] - start_point[0]) * (1 - progress),
-            start_point[1] + (center[1] - start_point[1]) * (1 - progress)
-        )
-        zoom = max_zoom ** progress
-        glTranslatef(cam_center[0], cam_center[1], 0.0)
-        glScalef(zoom, zoom, 1.0)
-        glTranslatef(-cam_center[0], -cam_center[1], 0.0)
-        if progress > 0.1:
-            alpha = 1.0
-        else:
-            alpha = progress * 10.0
-        glColor4f(0.0, 0.0, 0.0, alpha)
-        glCallList(mosaic_display_lists[state.current_mosaic_picture])
-        glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
-        glScalef(nb_segments, nb_segments, 1.0)
-        glCallList(picture_display_lists[state.current_mosaic_picture])
-        glPopMatrix()
-        glutSwapBuffers()
-
-    def spin_display():
-        duration = 10000.
-        old_spin = state.spin
-        state.spin = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
-        if state.spin < old_spin:
-            current_tile_picture = state.current_mosaic_picture
-            state.current_mosaic_picture = iterator.next()
-            state.start_picture_coord = find_picture_in_mosaic(
-                current_tile_picture,
-                mosaic_factory.mosaic(state.current_mosaic_picture, nb_segments)
-            )
-        glutPostRedisplay()
-
-    glutInit(sys.argv)
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-    glutInitWindowSize(640, 480)
-    glutInitWindowPosition(100, 100)
-    glutCreateWindow('View')
-    init()
-    glutDisplayFunc(display)
-    glutReshapeFunc(reshape)
-    glutIdleFunc(spin_display)
-    glutMainLoop()
-
-start_drawing()
+#  Request double buffer display mode.
+#  Register mouse input callback functions
+glutInit(sys.argv)
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+glutInitWindowSize(640, 480)
+glutInitWindowPosition(100, 100)
+glutCreateWindow('View')
+init()
+glutDisplayFunc(display)
+glutReshapeFunc(reshape)
+glutIdleFunc(spin_display)
+glutMainLoop()
