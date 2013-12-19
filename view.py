@@ -33,7 +33,7 @@ current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
 
 
-def findPictureInMosaic(picture, mosaic):
+def find_picture_in_mosaic(picture, mosaic):
     x = -1
     for y, line in enumerate(mosaic):
         if picture in line:
@@ -44,13 +44,13 @@ def findPictureInMosaic(picture, mosaic):
     return (x, len(mosaic) - y - 1)
 
 
-start_picture_coord = findPictureInMosaic(
+start_picture_coord = find_picture_in_mosaic(
     current_tile_picture,
     mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
 )
 
 
-def loadTexture(name):
+def load_texture(name):
     image = Image.open(name)
 
     width, height = image.size
@@ -74,23 +74,23 @@ def loadTexture(name):
     return _id
 
 
-def generatePictureDisplayList(picture, width, height):
+def generate_picture_display_list(picture, width, height):
     dl = glGenLists(1)
     picture_display_lists[picture] = dl
     glNewList(dl, GL_COMPILE)
-    drawPicture(picture, 0, 0, width, height)
+    draw_picture(picture, 0, 0, width, height)
     glEndList()
 
 
-def generateMosaicDisplayList(picture):
+def generate_mosaic_display_list(picture):
     dl = glGenLists(1)
     mosaic_display_lists[picture] = dl
     glNewList(dl, GL_COMPILE)
-    drawMosaic(picture)
+    draw_mosaic(picture)
     glEndList()
 
 
-def drawMosaic(picture):
+def draw_mosaic(picture):
     m = mosaic_factory.mosaic(picture, nb_segments)
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
@@ -105,7 +105,7 @@ def drawMosaic(picture):
             glPopMatrix()
 
 
-def drawPicture(picture, x, y, width, height):
+def draw_picture(picture, x, y, width, height):
     glBindTexture(GL_TEXTURE_2D, textures[picture])
     glPushMatrix()
     glTranslatef(x, y, 0.0)
@@ -180,7 +180,7 @@ def display():
     glutSwapBuffers()
 
 
-def spinDisplay():
+def spin_display():
     global spin
     global current_mosaic_picture
     global start_picture_coord
@@ -190,7 +190,7 @@ def spinDisplay():
     if spin < old_spin:
         current_tile_picture = current_mosaic_picture
         current_mosaic_picture = iterator.next()
-        start_picture_coord = findPictureInMosaic(
+        start_picture_coord = find_picture_in_mosaic(
             current_tile_picture,
             mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
         )
@@ -201,17 +201,17 @@ def init():
     print "loading textures:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        textures[img] = loadTexture(img.path)
+        textures[img] = load_texture(img.path)
     width = mosaic_factory.ratio * size
     height = size
     print "generating picture display lists:"
     for i, picture in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        generatePictureDisplayList(picture, width, height)
+        generate_picture_display_list(picture, width, height)
     print "generating mosaic display lists:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        generateMosaicDisplayList(img)
+        generate_mosaic_display_list(img)
 
     glEnable(GL_TEXTURE_2D)
     glEnable(GL_BLEND)
@@ -235,7 +235,7 @@ def reshape(w, h):
 def mouse(button, state, x, y):
     if button == GLUT_LEFT_BUTTON:
         if(state == GLUT_DOWN):
-            glutIdleFunc(spinDisplay)
+            glutIdleFunc(spin_display)
     elif button == GLUT_MIDDLE_BUTTON or button == GLUT_RIGHT_BUTTON:
         if(state == GLUT_DOWN):
             glutIdleFunc(None)
@@ -252,5 +252,5 @@ init()
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
 glutMouseFunc(mouse)
-glutIdleFunc(spinDisplay)
+glutIdleFunc(spin_display)
 glutMainLoop()
