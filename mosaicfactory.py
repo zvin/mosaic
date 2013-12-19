@@ -6,6 +6,7 @@ from PIL import Image
 from memoized import memoized
 from mosaicimage import MosaicImage
 
+
 class MosaicFactory(object):
     FILENAME = "mosaic.json"
 
@@ -61,6 +62,15 @@ class MosaicFactory(object):
                 sort_keys=True,
             )
 
+    @staticmethod
+    def list_image_files(folder):
+        return [
+            name for name in os.listdir(folder)
+            if name.lower().endswith(".jpg")
+            or name.lower().endswith(".jpeg")
+            or name.lower().endswith(".png")
+        ]
+
     @classmethod
     def load(cls, folder):
         factory = cls()
@@ -70,7 +80,7 @@ class MosaicFactory(object):
         except (IOError, ValueError):
             data = {}
         images_dict = data.get("images", {})
-        filenames = [name for name in os.listdir(folder) if name.endswith(".jpg")]  # TODO: png, gif, jpeg
+        filenames = MosaicFactory.list_image_files(folder)
         print "calculating average colors:"
         for i, filename in enumerate(filenames):
             print " {0}/{1}".format(i + 1, len(filenames))
@@ -95,7 +105,10 @@ class MosaicFactory(object):
             for j, img in enumerate(line):
                 img.load()
                 res.paste(
-                    img.image.resize((pane_width, pane_height), Image.ANTIALIAS),
+                    img.image.resize(
+                        (pane_width, pane_height),
+                        Image.ANTIALIAS
+                    ),
                     (j * pane_width, i * pane_height)
                 )
                 img.free()
