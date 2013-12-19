@@ -65,26 +65,6 @@ class MosaicImage(object):
         img.free()
         return img
 
-def color_difference(clr1, clr2):
-    return sum(map(lambda (x1, x2): abs(x1 - x2), zip(clr1, clr2)))
-
-
-def render_mosaic(mosaic, width, height):
-    nb_segments = len(mosaic)
-    pane_width = width / nb_segments
-    pane_height = height / nb_segments
-    res = Image.new("RGB", (width, height), (0, 0, 0))
-    for i, line in enumerate(mosaic):
-        for j, img in enumerate(line):
-            img.load()
-            res.paste(
-                img.image.resize((pane_width, pane_height), Image.ANTIALIAS),
-                (j * pane_width, i * pane_height)
-            )
-            img.free()
-            print "%3d/%3d" % (i * nb_segments + j, nb_segments**2)
-    return res
-
 
 class MosaicFactory(object):
     FILENAME = "mosaic.json"
@@ -94,11 +74,15 @@ class MosaicFactory(object):
         self.images = []
 
     @staticmethod
+    def color_difference(clr1, clr2):
+        return sum(map(lambda (x1, x2): abs(x1 - x2), zip(clr1, clr2)))
+
+    @staticmethod
     def find_nearest_image(color, images):
         nearest = None
         nearest_delta = 1000
         for img in images:
-            delta = color_difference(color, img.average_color)
+            delta = MosaicFactory.color_difference(color, img.average_color)
             if delta < nearest_delta:
                 nearest_delta = delta
                 nearest = img
@@ -147,8 +131,9 @@ class MosaicFactory(object):
             data = {}
         images_dict = data.get("images", {})
         filenames = [name for name in os.listdir(folder) if name.endswith(".jpg")]  # TODO: png, gif, jpeg
-        for filename in filenames:
-            print filename
+        print "Calculating average colors:"
+        for i, filename in enumerate(filenames):
+            print " {0}/{1}".format(i + 1, len(filenames))
             image_path = os.path.join(folder, filename)
             image_dict = images_dict.get(filename)
             if image_dict:
@@ -160,13 +145,29 @@ class MosaicFactory(object):
         factory.ratio = factory.images[0].ratio
         return factory
 
+    @staticmethod
+    def render_mosaic(mosaic, width, height):
+        nb_segments = len(mosaic)
+        pane_width = width / nb_segments
+        pane_height = height / nb_segments
+        res = Image.new("RGB", (width, height), (0, 0, 0))
+        for i, line in enumerate(mosaic):
+            for j, img in enumerate(line):
+                img.load()
+                res.paste(
+                    img.image.resize((pane_width, pane_height), Image.ANTIALIAS),
+                    (j * pane_width, i * pane_height)
+                )
+                img.free()
+                print "%3d/%3d" % (i * nb_segments + j, nb_segments**2)
+        return res
+
 if __name__ == "__main__":
     from sys import argv
     folder = argv[1]
     factory = MosaicFactory.load(folder)
     factory.save()
 
-#    m = MosaicFactory.load(folder)
-#    a = m.mosaic(m.images[0], 40)
-#    i = render_mosaic(a, 1024, 768)
+#    mosaic = factory.mosaic(m.images[0], 40)
+#    img = MosaicFactory.render_mosaic(mosaic, 1024, 768)
 

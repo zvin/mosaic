@@ -23,6 +23,7 @@ textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
 mosaic_factory = MosaicFactory.load(os.path.join(sys.argv[1]))
+mosaic_factory.save()
 #mosaic_factory.images = mosaic_factory.images[:30]
 nb_segments = 40
 size = 100 / float(nb_segments)
