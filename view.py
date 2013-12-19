@@ -7,7 +7,7 @@ import sys
 from PIL import Image
 
 from graph import image_iterator
-from mosaic import MosaicFactory, MosaicImage
+from mosaicfactory import MosaicFactory
 
 try:
     from OpenGL.GL import *

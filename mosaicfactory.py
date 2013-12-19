@@ -1,70 +1,10 @@
-#!/usr/bin/env python
-
 import json
 import os
 
 from PIL import Image
 
 from memoized import memoized
-
-
-class MosaicImage(object):
-
-    def __init__(self):
-        self.path = None
-        self.average_color = None
-        self.ratio = None
-
-    def load(self):
-        self.image = Image.open(self.path).convert()
-
-    def free(self):
-        self.image = None
-
-    def calculate_ratio(self):
-        self.ratio = self.image.size[0] / float(self.image.size[1])
-
-    def calculate_average_color(self):
-        self.average_color = self.image.resize(
-            (1, 1), Image.ANTIALIAS
-        ).getpixel((0, 0))
-
-    def calculate_grid(self, nb_segments):
-        self.load()
-        small = self.image.resize((nb_segments, nb_segments), Image.ANTIALIAS)
-        data = small.getdata()
-        res = []
-        for i in xrange(nb_segments):
-            res.append([])
-            for j in xrange(nb_segments):
-                res[-1].append(data[i * nb_segments + j])
-        self.free()
-        return res
-
-    def to_dict(self):
-        return {
-            "average_color": self.average_color,
-            "ratio": self.ratio,
-        }
-
-    @classmethod
-    def from_dict(cls, path, dct):
-        img = cls()
-        img.path = path
-        img.average_color = dct["average_color"]
-        img.ratio = dct["ratio"]
-        return img
-
-    @classmethod
-    def from_file(cls, path):
-        img = cls()
-        img.path = path
-        img.load()
-        img.calculate_average_color()
-        img.calculate_ratio()
-        img.free()
-        return img
-
+from mosaicimage import MosaicImage
 
 class MosaicFactory(object):
     FILENAME = "mosaic.json"
@@ -131,7 +71,7 @@ class MosaicFactory(object):
             data = {}
         images_dict = data.get("images", {})
         filenames = [name for name in os.listdir(folder) if name.endswith(".jpg")]  # TODO: png, gif, jpeg
-        print "Calculating average colors:"
+        print "calculating average colors:"
         for i, filename in enumerate(filenames):
             print " {0}/{1}".format(i + 1, len(filenames))
             image_path = os.path.join(folder, filename)
@@ -162,6 +102,8 @@ class MosaicFactory(object):
                 print "%3d/%3d" % (i * nb_segments + j, nb_segments**2)
         return res
 
+
+# TODO: remove main
 if __name__ == "__main__":
     from sys import argv
     folder = argv[1]
@@ -170,4 +112,3 @@ if __name__ == "__main__":
 
 #    mosaic = factory.mosaic(m.images[0], 40)
 #    img = MosaicFactory.render_mosaic(mosaic, 1024, 768)
-
