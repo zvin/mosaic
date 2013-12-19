@@ -4,7 +4,7 @@ from pygraph.algorithms.accessibility import mutual_accessibility
 from pygraph.classes.digraph import digraph
 from pygraph.classes.exceptions import AdditionError
 
-from mosaic import MozaicFactory
+from mosaic import MosaicFactory
 
 
 def transition_graph(mosaic_factory, nb_segments):
@@ -66,8 +66,9 @@ def image_iterator(mosaic_factory, nb_segments):
 
 
 if __name__ == "__main__":
+    from sys import argv
     from pygraph.readwrite.dot import write
-    mosaic_factory = MozaicFactory.load("mosaic.pickle")
+    mosaic_factory = MosaicFactory.load(argv[1])
     gr = transition_graph(mosaic_factory, 4)
     with open("test.dot", "w") as _file:
         _file.write(write(gr))

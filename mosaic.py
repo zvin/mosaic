@@ -1,22 +1,19 @@
 #!/usr/bin/env python
 
-import cPickle as pickle
+import json
+import os
 
-from os import listdir
-from os.path import join
 from PIL import Image
 
 from memoized import memoized
 
 
-class MozaicImage(object):
+class MosaicImage(object):
 
-    def __init__(self, path):
-        self.path = path
-        self.load()
-        self.average_color = self.calculate_average_color()
-        self.ratio = self.calculate_ratio()
-        self.free()
+    def __init__(self):
+        self.path = None
+        self.average_color = None
+        self.ratio = None
 
     def load(self):
         self.image = Image.open(self.path).convert()
@@ -24,16 +21,13 @@ class MozaicImage(object):
     def free(self):
         self.image = None
 
-    def show(self):
-        self.load()
-        self.image.show()
-        self.free()
-
     def calculate_ratio(self):
-        return self.image.size[0] / float(self.image.size[1])
+        self.ratio = self.image.size[0] / float(self.image.size[1])
 
     def calculate_average_color(self):
-        return self.image.resize((1, 1), Image.ANTIALIAS).getpixel((0, 0))
+        self.average_color = self.image.resize(
+            (1, 1), Image.ANTIALIAS
+        ).getpixel((0, 0))
 
     def calculate_grid(self, nb_segments):
         self.load()
@@ -47,6 +41,29 @@ class MozaicImage(object):
         self.free()
         return res
 
+    def to_dict(self):
+        return {
+            "average_color": self.average_color,
+            "ratio": self.ratio,
+        }
+
+    @classmethod
+    def from_dict(cls, path, dct):
+        img = cls()
+        img.path = path
+        img.average_color = dct["average_color"]
+        img.ratio = dct["ratio"]
+        return img
+
+    @classmethod
+    def from_file(cls, path):
+        img = cls()
+        img.path = path
+        img.load()
+        img.calculate_average_color()
+        img.calculate_ratio()
+        img.free()
+        return img
 
 def color_difference(clr1, clr2):
     return sum(map(lambda (x1, x2): abs(x1 - x2), zip(clr1, clr2)))
@@ -69,86 +86,87 @@ def render_mosaic(mosaic, width, height):
     return res
 
 
-def find_nearest_image(color, images):
-    nearest = None
-    nearest_delta = 1000
-    for img in images:
-        delta = color_difference(color, img.average_color)
-        if delta < nearest_delta:
-            nearest_delta = delta
-            nearest = img
-    return nearest
+class MosaicFactory(object):
+    FILENAME = "mosaic.json"
 
-
-class MozaicFactory(object):
     def __init__(self):
         self.ratio = None
         self.images = []
 
+    @staticmethod
+    def find_nearest_image(color, images):
+        nearest = None
+        nearest_delta = 1000
+        for img in images:
+            delta = color_difference(color, img.average_color)
+            if delta < nearest_delta:
+                nearest_delta = delta
+                nearest = img
+        return nearest
+
     @memoized
-    def mosaic(self, image, nb_segments):
+    def mosaic(self, image, nb_segments, reuse=True):
         available_images = set(self.images)
         pixels = image.calculate_grid(nb_segments)
         res = []
         for line in pixels:
             res.append([])
             for pixel in line:
-                nearest = find_nearest_image(pixel, available_images)
+                nearest = MosaicFactory.find_nearest_image(
+                    pixel,
+                    available_images
+                )
                 res[-1].append(nearest)
-#                available_images.remove(nearest)
+                if not reuse:
+                    available_images.remove(nearest)
         return res
 
-    def save(self, fname):
-        with open(fname, "w") as _file:
-            pickle.dump(self, _file)
+    def save(self):
+        folder = os.path.dirname(self.images[0].path)
+        with open(os.path.join(folder, self.FILENAME), "w") as _file:
+            json.dump(
+                {
+                    "ratio": self.ratio,
+                    "images": dict(
+                        (os.path.basename(i.path), i.to_dict())
+                        for i in self.images
+                    ),
+                },
+                _file,
+                indent=4,
+                sort_keys=True,
+            )
 
-    @staticmethod
-    def load(fname):
-        with open(fname, "r") as _file:
-            return pickle.load(_file)
-
-    def load_folder(self, folder):
-        files = listdir(folder)
-        for i, fname in enumerate(files):
-            path = join(folder, fname)
-            try:
-                img = MozaicImage(path)
-                if self.ratio is None:
-                    self.ratio = img.ratio
-            except IOError:
-                print "Could not load %s" % path
+    @classmethod
+    def load(cls, folder):
+        factory = cls()
+        try:
+            with open(os.path.join(folder, cls.FILENAME), "r") as _file:
+                data = json.load(_file)
+        except (IOError, ValueError):
+            data = {}
+        images_dict = data.get("images", {})
+        filenames = [name for name in os.listdir(folder) if name.endswith(".jpg")]  # TODO: png, gif, jpeg
+        for filename in filenames:
+            print filename
+            image_path = os.path.join(folder, filename)
+            image_dict = images_dict.get(filename)
+            if image_dict:
+                img = MosaicImage.from_dict(image_path, image_dict)
             else:
-                print "%3d/%3d" % (i + 1, len(files))
-                if img.ratio == self.ratio:
-                    self.images.append(img)
+                img = MosaicImage.from_file(image_path)
+            factory.images.append(img)
+        # TODO: ratio
+        factory.ratio = factory.images[0].ratio
+        return factory
 
 if __name__ == "__main__":
     from sys import argv
     folder = argv[1]
-    factory = MozaicFactory()
-    factory.load_folder(folder)
-    factory.save(join(folder, "mosaic.pickle"))
+    factory = MosaicFactory.load(folder)
+    factory.save()
 
-#    m = MozaicFactory.load("mosaic.pickle")
-#    a = m.mosaic(m.images[105], 40)
+#    m = MosaicFactory.load(folder)
+#    a = m.mosaic(m.images[0], 40)
 #    i = render_mosaic(a, 1024, 768)
 
-    #for name in listdir(folder):
-    #    path = join(folder, name)
-    #    if isfile(path):
-    #        try:
-    #            im = MozaicImage(path)
-    ##            print name
-    #            average_color = im.average_color2()
-    #            print "%s\t%.2f\t(%3d %3d %3d)" % (
-    #                im.image.size,
-    #                float(im.image.size[0]) / im.image.size[1],
-    #                average_color[0],
-    #                average_color[1],
-    #                average_color[2]
-    #            )
-    ##            print im.grid(2)[0], im.grid2(2)[0]
-    ##            print im.grid(2)[1], im.grid2(2)[1]
-    #        except IOError, e:
-    #            print "Could not open %s" % path
-    ##            print e

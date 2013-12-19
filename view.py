@@ -7,7 +7,7 @@ import sys
 from PIL import Image
 
 from graph import image_iterator
-from mosaic import MozaicFactory, MozaicImage
+from mosaic import MosaicFactory, MosaicImage
 
 try:
     from OpenGL.GL import *
@@ -22,8 +22,8 @@ spin = 0.0
 textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
-mosaic_factory = MozaicFactory.load(os.path.join(sys.argv[1], "mosaic.pickle"))
-mosaic_factory.images = mosaic_factory.images[:30]
+mosaic_factory = MosaicFactory.load(os.path.join(sys.argv[1]))
+#mosaic_factory.images = mosaic_factory.images[:30]
 nb_segments = 40
 size = 100 / float(nb_segments)
 
@@ -32,7 +32,7 @@ current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
 
 
-def findPictureInMozaic(picture, mosaic):
+def findPictureInMosaic(picture, mosaic):
     x = -1
     for y, line in enumerate(mosaic):
         if picture in line:
@@ -43,7 +43,7 @@ def findPictureInMozaic(picture, mosaic):
     return (x, len(mosaic) - y - 1)
 
 
-start_picture_coord = findPictureInMozaic(
+start_picture_coord = findPictureInMosaic(
     current_tile_picture,
     mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
 )
@@ -52,17 +52,16 @@ start_picture_coord = findPictureInMozaic(
 def loadTexture(name):
     image = Image.open(name)
 
-    ix = image.size[0]
-    iy = image.size[1]
+    width, height = image.size
     image = image.tostring("raw", "RGBX", 0, -1)
 
     # Create Texture
     _id = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, _id)   # 2d texture (x and y size)
+    glBindTexture(GL_TEXTURE_2D, _id)
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
     glTexImage2D(
-        GL_TEXTURE_2D, 0, 3, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, image
+        GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image
     )
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
@@ -82,15 +81,15 @@ def generatePictureDisplayList(picture, width, height):
     glEndList()
 
 
-def generateMozaicDisplayList(picture):
+def generateMosaicDisplayList(picture):
     dl = glGenLists(1)
     mosaic_display_lists[picture] = dl
     glNewList(dl, GL_COMPILE)
-    drawMozaic(picture)
+    drawMosaic(picture)
     glEndList()
 
 
-def drawMozaic(picture):
+def drawMosaic(picture):
     m = mosaic_factory.mosaic(picture, nb_segments)
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
@@ -156,7 +155,7 @@ def display():
     center = ((height * mosaic_factory.ratio) / 2, height / 2)
     glClear(GL_COLOR_BUFFER_BIT)
     glPushMatrix()
-    progress = 1 - spin / 360.
+    progress = 1 - spin
     max_zoom = nb_segments
     progress = fake_sigmoid(progress)
     cam_center = (
@@ -186,11 +185,11 @@ def spinDisplay():
     global start_picture_coord
     duration = 10000.
     old_spin = spin
-    spin = 360. * (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
+    spin = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
     if spin < old_spin:
         current_tile_picture = current_mosaic_picture
         current_mosaic_picture = iterator.next()
-        start_picture_coord = findPictureInMozaic(
+        start_picture_coord = findPictureInMosaic(
             current_tile_picture,
             mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
         )
@@ -211,7 +210,7 @@ def init():
     print "generating mosaic display lists:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        generateMozaicDisplayList(img)
+        generateMosaicDisplayList(img)
 
     glEnable(GL_TEXTURE_2D)
     glEnable(GL_BLEND)
@@ -252,4 +251,5 @@ init()
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
 glutMouseFunc(mouse)
+glutIdleFunc(spinDisplay)
 glutMainLoop()
