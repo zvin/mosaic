@@ -232,15 +232,6 @@ def reshape(w, h):
     glLoadIdentity()
 
 
-def mouse(button, state, x, y):
-    if button == GLUT_LEFT_BUTTON:
-        if(state == GLUT_DOWN):
-            glutIdleFunc(spin_display)
-    elif button == GLUT_MIDDLE_BUTTON or button == GLUT_RIGHT_BUTTON:
-        if(state == GLUT_DOWN):
-            glutIdleFunc(None)
-
-
 #  Request double buffer display mode.
 #  Register mouse input callback functions
 glutInit(sys.argv)
@@ -251,6 +242,5 @@ glutCreateWindow('View')
 init()
 glutDisplayFunc(display)
 glutReshapeFunc(reshape)
-glutMouseFunc(mouse)
 glutIdleFunc(spin_display)
 glutMainLoop()
