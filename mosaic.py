@@ -22,13 +22,11 @@ parser = argparse.ArgumentParser(description="Photos mosaic visualization")
 parser.add_argument(
     "folder",
     type=str,
-    nargs=1,
     help="folder containing photos"
 )
 parser.add_argument(
     "-t", "--tiles",
     type=int,
-    nargs=1,
     default=40,
     help="number of tiles in each mosaic"
 )
@@ -46,7 +44,7 @@ textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
 
-mosaic_factory = MosaicFactory.load(os.path.join(args.folder[0]))
+mosaic_factory = MosaicFactory.load(os.path.join(args.folder))
 mosaic_factory.save()
 nb_segments = args.tiles
 
@@ -71,7 +69,7 @@ def find_picture_in_mosaic(picture, mosaic):
 
 start_picture_coord = find_picture_in_mosaic(
     current_tile_picture,
-    mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
+    mosaic_factory.mosaic(current_mosaic_picture, nb_segments, args.reuse)
 )
 
 
@@ -116,7 +114,7 @@ def generate_mosaic_display_list(picture):
 
 
 def draw_mosaic(picture):
-    m = mosaic_factory.mosaic(picture, nb_segments)
+    m = mosaic_factory.mosaic(picture, nb_segments, args.reuse)
     for column in xrange(nb_segments):
         for line in xrange(nb_segments):
             glPushMatrix()
@@ -216,7 +214,11 @@ def spin_display():
         current_mosaic_picture = iterator.next()
         start_picture_coord = find_picture_in_mosaic(
             current_tile_picture,
-            mosaic_factory.mosaic(current_mosaic_picture, nb_segments)
+            mosaic_factory.mosaic(
+                current_mosaic_picture,
+                nb_segments,
+                args.reuse
+            )
         )
     glutPostRedisplay()
 
@@ -254,17 +256,12 @@ def reshape(w, h):
     glLoadIdentity()
 
 
-def start_drawing():
-    glutInit(sys.argv)
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-    glutInitWindowSize(640, 480)
-    glutCreateWindow('View')
-    init()
-    glutDisplayFunc(display)
-    glutReshapeFunc(reshape)
-    glutIdleFunc(spin_display)
-    glutMainLoop()
-
-
-if __name__ == "__main__":
-    start_drawing()
+glutInit(sys.argv)
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+glutInitWindowSize(640, 480)
+glutCreateWindow("Mosaic for " + args.folder)
+init()
+glutDisplayFunc(display)
+glutReshapeFunc(reshape)
+glutIdleFunc(spin_display)
+glutMainLoop()
