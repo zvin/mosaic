@@ -7,13 +7,13 @@ from pygraph.classes.exceptions import AdditionError
 from mosaic import MosaicFactory
 
 
-def transition_graph(mosaic_factory, nb_segments):
+def transition_graph(mosaic_factory, nb_segments, reuse=True):
     gr = digraph()
     gr.add_nodes(mosaic_factory.images)
     print "calculating transition graph:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        for line in mosaic_factory.mosaic(img, nb_segments):
+        for line in mosaic_factory.mosaic(img, nb_segments, reuse):
             for pic in line:
                 try:
                     gr.add_edge((pic, img))
@@ -52,8 +52,8 @@ def next_node(g, node):
     return next
 
 
-def image_iterator(mosaic_factory, nb_segments):
-    gr = transition_graph(mosaic_factory, nb_segments)
+def image_iterator(mosaic_factory, nb_segments, reuse=True):
+    gr = transition_graph(mosaic_factory, nb_segments, reuse)
     c = biggest_strongly_connected_component(gr)
     init_visited(c)
 

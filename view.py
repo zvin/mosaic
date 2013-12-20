@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import math
 import os
 import sys
@@ -17,18 +18,42 @@ except:
     print "ERROR: PyOpenGL not installed properly."
     sys.exit()
 
+parser = argparse.ArgumentParser(description="Photos mosaic visualization")
+parser.add_argument(
+    "folder",
+    type=str,
+    nargs=1,
+    help="folder containing photos"
+)
+parser.add_argument(
+    "-t", "--tiles",
+    type=int,
+    nargs=1,
+    default=40,
+    help="number of tiles in each mosaic"
+)
+parser.add_argument(
+    "-n", "--no-reuse",
+    dest="reuse",
+    action="store_false",
+    help="a tile can only be used once in a photo (this requires that tiles^2 <= #photos in folder"
+)
+
+args = parser.parse_args()
 
 spin = 0.0
 textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
-mosaic_factory = MosaicFactory.load(os.path.join(sys.argv[1]))
-mosaic_factory.save()
-#mosaic_factory.images = mosaic_factory.images[:30]
-nb_segments = 40
-size = 100 / float(nb_segments)
 
-iterator = image_iterator(mosaic_factory, nb_segments)
+mosaic_factory = MosaicFactory.load(os.path.join(args.folder[0]))
+mosaic_factory.save()
+nb_segments = args.tiles
+
+HEIGHT = 100.
+size = HEIGHT / nb_segments
+
+iterator = image_iterator(mosaic_factory, nb_segments, args.reuse)
 current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
 
@@ -148,12 +173,11 @@ def fake_sigmoid(value):
 
 
 def display():
-    height = 100.0
     start_point = (
-        start_picture_coord[0] * ((height * mosaic_factory.ratio) / (nb_segments - 1)),
-        start_picture_coord[1] * (height / (nb_segments - 1))
+        start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (nb_segments - 1)),
+        start_picture_coord[1] * (HEIGHT / (nb_segments - 1))
     )
-    center = ((height * mosaic_factory.ratio) / 2, height / 2)
+    center = ((HEIGHT * mosaic_factory.ratio) / 2, HEIGHT / 2)
     glClear(GL_COLOR_BUFFER_BIT)
     glPushMatrix()
     progress = 1 - spin
@@ -225,22 +249,22 @@ def reshape(w, h):
     ratio = float(w) / h
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-#    glOrtho(-50.0, 50.0, -50.0, 50.0, -1.0, 1.0)
-    glOrtho(0.0, 100.0 * ratio, 0.0, 100.0, -1.0, 1.0)
-#    glOrtho(0.0, w, 0.0, h, -1.0, 1.0)
+    glOrtho(0.0, HEIGHT * ratio, 0.0, HEIGHT, -1.0, 1.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
 
-#  Request double buffer display mode.
-#  Register mouse input callback functions
-glutInit(sys.argv)
-glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-glutInitWindowSize(640, 480)
-glutInitWindowPosition(100, 100)
-glutCreateWindow('View')
-init()
-glutDisplayFunc(display)
-glutReshapeFunc(reshape)
-glutIdleFunc(spin_display)
-glutMainLoop()
+def start_drawing():
+    glutInit(sys.argv)
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+    glutInitWindowSize(640, 480)
+    glutCreateWindow('View')
+    init()
+    glutDisplayFunc(display)
+    glutReshapeFunc(reshape)
+    glutIdleFunc(spin_display)
+    glutMainLoop()
+
+
+if __name__ == "__main__":
+    start_drawing()
