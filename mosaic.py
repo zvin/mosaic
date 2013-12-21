@@ -251,7 +251,11 @@ def reshape(w, h):
     ratio = float(w) / h
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    glOrtho(0.0, HEIGHT * ratio, 0.0, HEIGHT, -1.0, 1.0)
+    viewport_center = HEIGHT * ratio / 2
+    photo_center = HEIGHT * mosaic_factory.ratio / 2
+    left = photo_center - viewport_center
+    right = photo_center + viewport_center
+    glOrtho(left, right, 0.0, HEIGHT, -1.0, 1.0)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
