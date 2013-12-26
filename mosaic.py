@@ -220,7 +220,7 @@ def display():
     glColor4f(0.0, 0.0, 0.0, alpha)
     glCallList(mosaic_display_lists[current_mosaic_picture])
     glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
-    glScalef(args.tiles, args.tiles, 1.0)
+    glScalef(max_zoom, max_zoom, 1.0)
     glCallList(picture_display_lists[current_mosaic_picture])
     glPopMatrix()
     glutSwapBuffers()
@@ -231,9 +231,9 @@ def spin_display():
     global current_mosaic_picture
     global start_picture_coord
     duration = args.duration * 1000.
-    oldreverse_sigmoid_progress = progress
+    old_progress = progress
     progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
-    if progress < oldreverse_sigmoid_progress:
+    if progress < old_progress:
         current_tile_picture = current_mosaic_picture
         current_mosaic_picture = iterator.next()
         start_picture_coord = find_picture_in_mosaic(
