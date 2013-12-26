@@ -31,6 +31,12 @@ parser.add_argument(
     help="number of tiles in each mosaic"
 )
 parser.add_argument(
+    "-d", "--duration",
+    type=float,
+    default=10.,
+    help="zooming out duration in seconds"
+)
+parser.add_argument(
     "-n", "--no-reuse",
     dest="reuse",
     action="store_false",
@@ -204,7 +210,7 @@ def spin_display():
     global progress
     global current_mosaic_picture
     global start_picture_coord
-    duration = 10000.
+    duration = args.duration * 1000.
     oldreverse_sigmoid_progress = progress
     progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
     if progress < oldreverse_sigmoid_progress:
