@@ -194,6 +194,14 @@ def fake_sigmoid(value):
     else:
         return res
 
+def angle_difference(a1, a2):
+    difference = a1 - a2
+    if abs(difference) > 180:
+        difference = difference % 180
+        if a1 > a2:
+            difference = -difference
+    return difference
+
 def display():
     start_point = (
         start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (args.tiles - 1)),
@@ -204,7 +212,10 @@ def display():
     sigmoid_progress = 1 - reverse_sigmoid_progress
     max_zoom = args.tiles
     zoom = max_zoom ** reverse_sigmoid_progress
-    angle = current_mosaic_picture.orientation * sigmoid_progress + start_orientation * reverse_sigmoid_progress
+    angle = start_orientation + sigmoid_progress * angle_difference(
+        current_mosaic_picture.orientation,
+        start_orientation
+    )
     if reverse_sigmoid_progress > 0.1:
         alpha = 1.0
     else:
