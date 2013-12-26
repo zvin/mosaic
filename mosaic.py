@@ -5,6 +5,7 @@ import math
 import os
 import sys
 
+from math import sqrt
 from PIL import Image
 
 from graph import image_iterator
@@ -29,6 +30,12 @@ parser.add_argument(
     type=int,
     default=40,
     help="number of tiles in each mosaic"
+)
+parser.add_argument(
+    "-p", "--pixels-limit",
+    type=int,
+    default=640 * 480,
+    help="maximum number of pixels for each texture (defaults to 640x480)"
 )
 parser.add_argument(
     "-d", "--duration",
@@ -78,8 +85,21 @@ start_picture_coord = find_picture_in_mosaic(
 )
 
 
+def limit_pixels_count(image, limit):
+    width, height = image.size
+    pixels_count = width * height
+    if pixels_count > limit:
+        ratio = sqrt(limit / float(pixels_count))
+        new_width = int(round(width * ratio))
+        new_height = int(round(height * ratio))
+        return image.resize((new_width, new_height), Image.ANTIALIAS)
+    else:
+        return image
+
+
 def load_texture(name):
     image = Image.open(name)
+    image = limit_pixels_count(image, args.pixels_limit)
 
     width, height = image.size
     image = image.tostring("raw", "RGBX", 0, -1)
