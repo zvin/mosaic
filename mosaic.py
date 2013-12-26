@@ -39,7 +39,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-spin = 0.0
+progress = 0.0
 textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
@@ -169,7 +169,6 @@ def fake_sigmoid(value):
     else:
         return res
 
-
 def display():
     start_point = (
         start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (nb_segments - 1)),
@@ -178,21 +177,21 @@ def display():
     center = ((HEIGHT * mosaic_factory.ratio) / 2, HEIGHT / 2)
     glClear(GL_COLOR_BUFFER_BIT)
     glPushMatrix()
-    progress = 1 - spin
+    reverse_sigmoid_progress = fake_sigmoid(1 - progress)
+    sigmoid_progress = 1 - reverse_sigmoid_progress
     max_zoom = nb_segments
-    progress = fake_sigmoid(progress)
     cam_center = (
-        start_point[0] + (center[0] - start_point[0]) * (1 - progress),
-        start_point[1] + (center[1] - start_point[1]) * (1 - progress)
+        start_point[0] + (center[0] - start_point[0]) * sigmoid_progress,
+        start_point[1] + (center[1] - start_point[1]) * sigmoid_progress
     )
-    zoom = max_zoom ** progress
+    zoom = max_zoom ** reverse_sigmoid_progress
     glTranslatef(cam_center[0], cam_center[1], 0.0)
     glScalef(zoom, zoom, 1.0)
     glTranslatef(-cam_center[0], -cam_center[1], 0.0)
-    if progress > 0.1:
+    if reverse_sigmoid_progress > 0.1:
         alpha = 1.0
     else:
-        alpha = progress * 10.0
+        alpha = reverse_sigmoid_progress * 10.0
     glColor4f(0.0, 0.0, 0.0, alpha)
     glCallList(mosaic_display_lists[current_mosaic_picture])
     glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
@@ -203,13 +202,13 @@ def display():
 
 
 def spin_display():
-    global spin
+    global progress
     global current_mosaic_picture
     global start_picture_coord
     duration = 10000.
-    old_spin = spin
-    spin = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
-    if spin < old_spin:
+    oldreverse_sigmoid_progress = progress
+    progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
+    if progress < oldreverse_sigmoid_progress:
         current_tile_picture = current_mosaic_picture
         current_mosaic_picture = iterator.next()
         start_picture_coord = find_picture_in_mosaic(
