@@ -66,7 +66,7 @@ size = HEIGHT / args.tiles
 iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
 current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
-
+start_orientation = current_tile_picture.orientation
 
 def find_picture_in_mosaic(picture, mosaic):
     x = -1
@@ -199,29 +199,35 @@ def display():
         start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (args.tiles - 1)),
         start_picture_coord[1] * (HEIGHT / (args.tiles - 1))
     )
-    center = ((HEIGHT * mosaic_factory.ratio) / 2, HEIGHT / 2)
-    glClear(GL_COLOR_BUFFER_BIT)
-    glPushMatrix()
+    center = ((HEIGHT * mosaic_factory.ratio) / 2., HEIGHT / 2.)
     reverse_sigmoid_progress = fake_sigmoid(1 - progress)
     sigmoid_progress = 1 - reverse_sigmoid_progress
     max_zoom = args.tiles
-    cam_center = (
-        start_point[0] + (center[0] - start_point[0]) * sigmoid_progress,
-        start_point[1] + (center[1] - start_point[1]) * sigmoid_progress
-    )
     zoom = max_zoom ** reverse_sigmoid_progress
-    glTranslatef(cam_center[0], cam_center[1], 0.0)
-    glScalef(zoom, zoom, 1.0)
-    glTranslatef(-cam_center[0], -cam_center[1], 0.0)
+    angle = current_mosaic_picture.orientation * sigmoid_progress + start_orientation * reverse_sigmoid_progress
     if reverse_sigmoid_progress > 0.1:
         alpha = 1.0
     else:
         alpha = reverse_sigmoid_progress * 10.0
+
+    glClear(GL_COLOR_BUFFER_BIT)
+    glPushMatrix()
+
+    glTranslatef(center[0], center[1], 0.0)
+    glRotatef(angle, 0, 0, 1)
+    glTranslatef(-center[0], -center[1], 0.0)
+
+    glTranslatef(start_point[0], start_point[1], 0.0)
+    glScalef(zoom, zoom, 1.0)
+    glTranslatef(-start_point[0], -start_point[1], 0.0)
+
     glColor4f(0.0, 0.0, 0.0, alpha)
     glCallList(mosaic_display_lists[current_mosaic_picture])
     glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
+
     glScalef(max_zoom, max_zoom, 1.0)
     glCallList(picture_display_lists[current_mosaic_picture])
+
     glPopMatrix()
     glutSwapBuffers()
 
@@ -230,11 +236,13 @@ def spin_display():
     global progress
     global current_mosaic_picture
     global start_picture_coord
+    global start_orientation
     duration = args.duration * 1000.
     old_progress = progress
     progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
     if progress < old_progress:
         current_tile_picture = current_mosaic_picture
+        start_orientation = current_mosaic_picture.orientation
         current_mosaic_picture = iterator.next()
         start_picture_coord = find_picture_in_mosaic(
             current_tile_picture,
