@@ -46,12 +46,11 @@ mosaic_display_lists = {}
 
 mosaic_factory = MosaicFactory.load(os.path.join(args.folder))
 mosaic_factory.save()
-nb_segments = args.tiles
 
 HEIGHT = 100.
-size = HEIGHT / nb_segments
+size = HEIGHT / args.tiles
 
-iterator = image_iterator(mosaic_factory, nb_segments, args.reuse)
+iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
 current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
 
@@ -69,7 +68,7 @@ def find_picture_in_mosaic(picture, mosaic):
 
 start_picture_coord = find_picture_in_mosaic(
     current_tile_picture,
-    mosaic_factory.mosaic(current_mosaic_picture, nb_segments, args.reuse)
+    mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse)
 )
 
 
@@ -114,16 +113,16 @@ def generate_mosaic_display_list(picture):
 
 
 def draw_mosaic(picture):
-    m = mosaic_factory.mosaic(picture, nb_segments, args.reuse)
-    for column in xrange(nb_segments):
-        for line in xrange(nb_segments):
+    m = mosaic_factory.mosaic(picture, args.tiles, args.reuse)
+    for column in xrange(args.tiles):
+        for line in xrange(args.tiles):
             glPushMatrix()
             glTranslatef(
                 column * mosaic_factory.ratio * size,
                 line * size, 0.0
             )
             glCallList(
-                picture_display_lists[m[nb_segments - 1 - line][column]]
+                picture_display_lists[m[args.tiles - 1 - line][column]]
             )
             glPopMatrix()
 
@@ -171,15 +170,15 @@ def fake_sigmoid(value):
 
 def display():
     start_point = (
-        start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (nb_segments - 1)),
-        start_picture_coord[1] * (HEIGHT / (nb_segments - 1))
+        start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (args.tiles - 1)),
+        start_picture_coord[1] * (HEIGHT / (args.tiles - 1))
     )
     center = ((HEIGHT * mosaic_factory.ratio) / 2, HEIGHT / 2)
     glClear(GL_COLOR_BUFFER_BIT)
     glPushMatrix()
     reverse_sigmoid_progress = fake_sigmoid(1 - progress)
     sigmoid_progress = 1 - reverse_sigmoid_progress
-    max_zoom = nb_segments
+    max_zoom = args.tiles
     cam_center = (
         start_point[0] + (center[0] - start_point[0]) * sigmoid_progress,
         start_point[1] + (center[1] - start_point[1]) * sigmoid_progress
@@ -195,7 +194,7 @@ def display():
     glColor4f(0.0, 0.0, 0.0, alpha)
     glCallList(mosaic_display_lists[current_mosaic_picture])
     glColor4f(0.0, 0.0, 0.0, 1.0 - alpha)
-    glScalef(nb_segments, nb_segments, 1.0)
+    glScalef(args.tiles, args.tiles, 1.0)
     glCallList(picture_display_lists[current_mosaic_picture])
     glPopMatrix()
     glutSwapBuffers()
@@ -215,7 +214,7 @@ def spin_display():
             current_tile_picture,
             mosaic_factory.mosaic(
                 current_mosaic_picture,
-                nb_segments,
+                args.tiles,
                 args.reuse
             )
         )
