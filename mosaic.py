@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 
 import argparse
 import math
-import os
 import sys
 
 from math import sqrt
@@ -11,13 +11,28 @@ from PIL import Image
 from graph import image_iterator
 from mosaicfactory import MosaicFactory
 
-try:
-    from OpenGL.GL import *
-    from OpenGL.GLU import *
-    from OpenGL.GLUT import *
-except:
-    print "ERROR: PyOpenGL not installed properly."
-    sys.exit()
+from OpenGL.GL import glGenTextures, glBindTexture, glPixelStorei, glTexImage2D
+from OpenGL.GL import glTexParameterf, glTexEnvf, glGenLists, glNewList
+from OpenGL.GL import glEndList, glPushMatrix, glPopMatrix, glTranslatef
+from OpenGL.GL import glRotatef, glScalef, glBegin, glEnd, glTexCoord2f
+from OpenGL.GL import glVertex2f, glCallList, glEnable, glBlendFunc, glColor4f
+from OpenGL.GL import glClearColor, glShadeModel, glClear, glViewport
+from OpenGL.GL import glMatrixMode, glLoadIdentity, glOrtho
+
+from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T
+from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER
+from OpenGL.GL import GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE
+from OpenGL.GL import GL_UNSIGNED_BYTE, GL_CLAMP, GL_UNPACK_ALIGNMENT, GL_RGBA
+from OpenGL.GL import GL_DECAL, GL_COMPILE, GL_QUADS, GL_REPEAT, GL_NEAREST
+from OpenGL.GL import GL_BLEND, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FLAT
+from OpenGL.GL import GL_COLOR_BUFFER_BIT, GL_PROJECTION, GL_MODELVIEW
+
+from OpenGL.GLUT import glutSwapBuffers, glutGet, glutPostRedisplay, glutInit
+from OpenGL.GLUT import glutInitDisplayMode, glutInitWindowSize, glutIdleFunc
+from OpenGL.GLUT import glutCreateWindow, glutDisplayFunc, glutReshapeFunc
+from OpenGL.GLUT import glutMainLoop
+
+from OpenGL.GLUT import GLUT_DOUBLE, GLUT_RGB, GLUT_ELAPSED_TIME
 
 parser = argparse.ArgumentParser(description="Photos mosaic visualization")
 parser.add_argument(
@@ -47,7 +62,8 @@ parser.add_argument(
     "-n", "--no-reuse",
     dest="reuse",
     action="store_false",
-    help="a tile can only be used once in a photo (this requires that tiles^2 <= #photos in folder"
+    help="a tile can only be used once in a photo (this requires that tiles²"
+         " <= #photos in folder"
 )
 
 args = parser.parse_args()
@@ -57,7 +73,7 @@ textures = {}
 picture_display_lists = {}
 mosaic_display_lists = {}
 
-mosaic_factory = MosaicFactory.load(os.path.join(args.folder))
+mosaic_factory = MosaicFactory.load(args.folder)
 mosaic_factory.save()
 
 HEIGHT = 100.
@@ -67,6 +83,7 @@ iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
 current_tile_picture = iterator.next()
 current_mosaic_picture = iterator.next()
 start_orientation = current_tile_picture.orientation
+
 
 def find_picture_in_mosaic(picture, mosaic):
     x = -1
@@ -194,6 +211,7 @@ def fake_sigmoid(value):
     else:
         return res
 
+
 def angle_difference(a1, a2):
     difference = a1 - a2
     if abs(difference) > 180:
@@ -202,12 +220,13 @@ def angle_difference(a1, a2):
             difference = -difference
     return difference
 
+
 def display():
     start_point = (
-        start_picture_coord[0] * ((HEIGHT * mosaic_factory.ratio) / (args.tiles - 1)),
-        start_picture_coord[1] * (HEIGHT / (args.tiles - 1))
+        start_picture_coord[0] * HEIGHT * mosaic_factory.ratio / (args.tiles - 1),
+        start_picture_coord[1] * HEIGHT / (args.tiles - 1)
     )
-    center = ((HEIGHT * mosaic_factory.ratio) / 2., HEIGHT / 2.)
+    center = (HEIGHT * mosaic_factory.ratio / 2., HEIGHT / 2.)
     reverse_sigmoid_progress = fake_sigmoid(1 - progress)
     sigmoid_progress = 1 - reverse_sigmoid_progress
     max_zoom = args.tiles
