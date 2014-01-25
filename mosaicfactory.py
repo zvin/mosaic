@@ -31,7 +31,7 @@ class MosaicFactory(object):
 
     @memoized
     def mosaic(self, image, nb_segments, reuse=True):
-        available_images = set(self.images)
+        available_images = self.images[:]
         pixels = image.calculate_grid(nb_segments, image.get_image())
         res = []
         for line in pixels:
