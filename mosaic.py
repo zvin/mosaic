@@ -261,16 +261,13 @@ def spin_display():
 
 
 def init():
+    width = mosaic_factory.ratio * size
+    height = size
     print "loading textures:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
         textures[img] = load_texture(img.get_image())
-    width = mosaic_factory.ratio * size
-    height = size
-    print "generating picture display lists:"
-    for i, picture in enumerate(mosaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        generate_picture_display_list(picture, width, height)
+        generate_picture_display_list(img, width, height)
     print "generating mosaic display lists:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
