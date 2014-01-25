@@ -66,24 +66,6 @@ parser.add_argument(
          " <= #photos in folder"
 )
 
-args = parser.parse_args()
-
-progress = 0.0
-textures = {}
-picture_display_lists = {}
-mosaic_display_lists = {}
-
-mosaic_factory = MosaicFactory.load(args.folder)
-mosaic_factory.save()
-
-HEIGHT = 100.
-size = HEIGHT / args.tiles
-
-iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
-current_tile_picture = iterator.next()
-current_mosaic_picture = iterator.next()
-start_orientation = current_tile_picture.orientation
-
 
 def find_picture_in_mosaic(picture, mosaic):
     x = -1
@@ -94,12 +76,6 @@ def find_picture_in_mosaic(picture, mosaic):
     if x == -1:
         raise Exception("picture not in mosaic")
     return (x, len(mosaic) - y - 1)
-
-
-start_picture_coord = find_picture_in_mosaic(
-    current_tile_picture,
-    mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse)
-)
 
 
 def limit_pixels_count(image, limit):
@@ -321,12 +297,36 @@ def reshape(w, h):
     glLoadIdentity()
 
 
-glutInit(sys.argv)
-glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-glutInitWindowSize(640, 480)
-glutCreateWindow("Mosaic for " + args.folder)
-init()
-glutDisplayFunc(display)
-glutReshapeFunc(reshape)
-glutIdleFunc(spin_display)
-glutMainLoop()
+if __name__ == "__main__":
+    args = parser.parse_args()
+
+    progress = 0.0
+    textures = {}
+    picture_display_lists = {}
+    mosaic_display_lists = {}
+
+    mosaic_factory = MosaicFactory.load(args.folder)
+    mosaic_factory.save()
+
+    HEIGHT = 100.
+    size = HEIGHT / args.tiles
+
+    iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
+    current_tile_picture = iterator.next()
+    current_mosaic_picture = iterator.next()
+    start_orientation = current_tile_picture.orientation
+
+    start_picture_coord = find_picture_in_mosaic(
+        current_tile_picture,
+        mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse)
+    )
+
+    glutInit(sys.argv)
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+    glutInitWindowSize(640, 480)
+    glutCreateWindow("Mosaic for " + args.folder)
+    init()
+    glutDisplayFunc(display)
+    glutReshapeFunc(reshape)
+    glutIdleFunc(spin_display)
+    glutMainLoop()
