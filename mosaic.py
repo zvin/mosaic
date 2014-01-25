@@ -114,8 +114,7 @@ def limit_pixels_count(image, limit):
         return image
 
 
-def load_texture(name):
-    image = Image.open(name)
+def load_texture(image):
     image = limit_pixels_count(image, args.pixels_limit)
 
     width, height = image.size
@@ -289,7 +288,7 @@ def init():
     print "loading textures:"
     for i, img in enumerate(mosaic_factory.images):
         print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
-        textures[img] = load_texture(img.path)
+        textures[img] = load_texture(img.get_image())
     width = mosaic_factory.ratio * size
     height = size
     print "generating picture display lists:"

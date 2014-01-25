@@ -32,7 +32,7 @@ class MosaicFactory(object):
     @memoized
     def mosaic(self, image, nb_segments, reuse=True):
         available_images = set(self.images)
-        pixels = image.calculate_grid(nb_segments)
+        pixels = image.calculate_grid(nb_segments, image.get_image())
         res = []
         for line in pixels:
             res.append([])
@@ -103,15 +103,14 @@ class MosaicFactory(object):
         res = Image.new("RGB", (width, height), (0, 0, 0))
         for i, line in enumerate(mosaic):
             for j, img in enumerate(line):
-                img.load()
+                image = img.get_image()
                 res.paste(
-                    img.image.resize(
+                    image.resize(
                         (pane_width, pane_height),
                         Image.ANTIALIAS
                     ),
                     (j * pane_width, i * pane_height)
                 )
-                img.free()
                 print "%3d/%3d" % (i * nb_segments + j, nb_segments**2)
         return res
 

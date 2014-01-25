@@ -9,38 +9,36 @@ class MosaicImage(object):
         self.ratio = None
         self.orientation = None
 
-    def load(self):
-        self.image = Image.open(self.path)
+    def get_image(self):
+        image = Image.open(self.path)
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        return image
 
-    def free(self):
-        self.image = None
+    def calculate_ratio(self, image):
+        self.ratio = image.size[0] / float(image.size[1])
 
-    def calculate_ratio(self):
-        self.ratio = self.image.size[0] / float(self.image.size[1])
-
-    def calculate_average_color(self):
-        self.average_color = self.image.resize(
+    def calculate_average_color(self, image):
+        self.average_color = image.resize(
             (1, 1), Image.ANTIALIAS
         ).getpixel((0, 0))
 
-    def calculate_orientation(self):
+    def calculate_orientation(self, image):
         orientations = {1: 0, 3: 180, 6: 270, 8: 90}
         try:
-            exif_orientation = self.image._getexif().get(274)
+            exif_orientation = image._getexif().get(274)
         except:
             exif_orientation = 1
-        self.orientation = orientations[exif_orientation]
+        self.orientation = orientations.get(exif_orientation, 0)
 
-    def calculate_grid(self, nb_segments):
-        self.load()
-        small = self.image.resize((nb_segments, nb_segments), Image.ANTIALIAS)
+    def calculate_grid(self, nb_segments, image):
+        small = image.resize((nb_segments, nb_segments), Image.ANTIALIAS)
         data = small.getdata()
         res = []
         for i in xrange(nb_segments):
             res.append([])
             for j in xrange(nb_segments):
                 res[-1].append(data[i * nb_segments + j])
-        self.free()
         return res
 
     def to_dict(self):
@@ -63,9 +61,8 @@ class MosaicImage(object):
     def from_file(cls, path):
         img = cls()
         img.path = path
-        img.load()
-        img.calculate_average_color()
-        img.calculate_ratio()
-        img.calculate_orientation()
-        img.free()
+        image = img.get_image()
+        img.calculate_average_color(image)
+        img.calculate_ratio(image)
+        img.calculate_orientation(image)
         return img
