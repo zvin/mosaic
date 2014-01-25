@@ -57,6 +57,7 @@ class MosaicImage(object):
         img.average_color = dct["average_color"]
         img.ratio = dct["ratio"]
         img.orientation = dct["orientation"]
+        img.mtime = dct["mtime"]
         return img
 
     @classmethod
