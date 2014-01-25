@@ -303,7 +303,6 @@ if __name__ == "__main__":
     mosaic_display_lists = {}
 
     mosaic_factory = MosaicFactory.load(args.folder)
-    mosaic_factory.save()
 
     HEIGHT = 100.
     size = HEIGHT / args.tiles

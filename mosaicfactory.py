@@ -1,6 +1,7 @@
 import json
 import os
 
+from itertools import groupby
 from PIL import Image
 
 from memoized import memoized
@@ -51,7 +52,6 @@ class MosaicFactory(object):
         with open(os.path.join(folder, self.FILENAME), "w") as _file:
             json.dump(
                 {
-                    "ratio": self.ratio,
                     "images": dict(
                         (os.path.basename(i.path), i.to_dict())
                         for i in self.images
@@ -91,8 +91,18 @@ class MosaicFactory(object):
             else:
                 img = MosaicImage.from_file(image_path)
             factory.images.append(img)
-        # TODO: ratio
-        factory.ratio = factory.images[0].ratio
+        # group images by ratio
+        get_ratio = lambda img: img.ratio
+        factory.images.sort(key=get_ratio)
+        image_groups = []
+        for ratio, images in groupby(factory.images, key=get_ratio):
+            image_groups.append(list(images))
+        # take only the largest group
+        image_groups.sort(key=len, reverse=True)
+        images = image_groups[0]
+        factory.ratio = images[0].ratio
+        factory.save()
+        factory.images = images
         return factory
 
     @staticmethod
