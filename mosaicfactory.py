@@ -86,10 +86,11 @@ class MosaicFactory(object):
             print " {0}/{1}".format(i + 1, len(filenames))
             image_path = os.path.join(folder, filename)
             image_dict = images_dict.get(filename)
-            if image_dict:
+            mtime = os.path.getmtime(image_path)
+            if image_dict and image_dict.get("mtime") == mtime:
                 img = MosaicImage.from_dict(image_path, image_dict)
             else:
-                img = MosaicImage.from_file(image_path)
+                img = MosaicImage.from_file(image_path, mtime)
             factory.images.append(img)
         # group images by ratio
         get_ratio = lambda img: img.ratio

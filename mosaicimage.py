@@ -5,6 +5,7 @@ class MosaicImage(object):
 
     def __init__(self):
         self.path = None
+        self.mtime = None
         self.average_color = None
         self.ratio = None
         self.orientation = None
@@ -46,6 +47,7 @@ class MosaicImage(object):
             "average_color": self.average_color,
             "ratio": self.ratio,
             "orientation": self.orientation,
+            "mtime": self.mtime,
         }
 
     @classmethod
@@ -58,9 +60,10 @@ class MosaicImage(object):
         return img
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path, mtime):
         img = cls()
         img.path = path
+        img.mtime = mtime
         image = img.get_image()
         img.calculate_average_color(image)
         img.calculate_ratio(image)
