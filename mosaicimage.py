@@ -42,6 +42,10 @@ class MosaicImage(object):
                 res[-1].append(data[i * nb_segments + j])
         return res
 
+    def load_texture(self, image, pixels_limit):
+        from display import load_texture
+        self.texture = load_texture(image, pixels_limit)
+
     def to_dict(self):
         return {
             "average_color": self.average_color,
