@@ -94,7 +94,7 @@ def load_texture(image):
     image = limit_pixels_count(image, args.pixels_limit)
 
     width, height = image.size
-    image = image.tostring("raw", "RGBX", 0, -1)
+    image = image.tobytes("raw", "RGBX", 0, -1)
 
     # Create Texture
     _id = glGenTextures(1)
@@ -132,8 +132,8 @@ def generate_mosaic_display_list(picture):
 
 def draw_mosaic(picture):
     m = mosaic_factory.mosaic(picture, args.tiles, args.reuse)
-    for column in xrange(args.tiles):
-        for line in xrange(args.tiles):
+    for column in range(args.tiles):
+        for line in range(args.tiles):
             glPushMatrix()
             glTranslatef(
                 column * mosaic_factory.ratio * size,
@@ -248,7 +248,7 @@ def spin_display():
     if progress < old_progress:
         current_tile_picture = current_mosaic_picture
         start_orientation = current_mosaic_picture.orientation
-        current_mosaic_picture = iterator.next()
+        current_mosaic_picture = iterator.__next__()
         start_picture_coord = find_picture_in_mosaic(
             current_tile_picture,
             mosaic_factory.mosaic(
@@ -263,14 +263,14 @@ def spin_display():
 def init():
     width = mosaic_factory.ratio * size
     height = size
-    print "loading textures:"
+    print("loading textures:")
     for i, img in enumerate(mosaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
+        print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
         textures[img] = load_texture(img.get_image())
         generate_picture_display_list(img, width, height)
-    print "generating mosaic display lists:"
+    print("generating mosaic display lists:")
     for i, img in enumerate(mosaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
+        print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
         generate_mosaic_display_list(img)
 
     glEnable(GL_TEXTURE_2D)
@@ -308,8 +308,8 @@ if __name__ == "__main__":
     size = HEIGHT / args.tiles
 
     iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
-    current_tile_picture = iterator.next()
-    current_mosaic_picture = iterator.next()
+    current_tile_picture = iterator.__next__()
+    current_mosaic_picture = iterator.__next__()
     start_orientation = current_tile_picture.orientation
 
     start_picture_coord = find_picture_in_mosaic(

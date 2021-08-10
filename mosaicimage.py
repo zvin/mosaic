@@ -10,6 +10,9 @@ class MosaicImage(object):
         self.ratio = None
         self.orientation = None
 
+    def __lt__(self, other):
+        return self.path < other.path
+
     def get_image(self):
         image = Image.open(self.path)
         if image.mode != "RGB":
@@ -36,9 +39,9 @@ class MosaicImage(object):
         small = image.resize((nb_segments, nb_segments), Image.ANTIALIAS)
         data = small.getdata()
         res = []
-        for i in xrange(nb_segments):
+        for i in range(nb_segments):
             res.append([])
-            for j in xrange(nb_segments):
+            for j in range(nb_segments):
                 res[-1].append(data[i * nb_segments + j])
         return res
 

@@ -10,9 +10,9 @@ from mosaicfactory import MosaicFactory
 def transition_graph(mosaic_factory, nb_segments, reuse=True):
     gr = digraph()
     gr.add_nodes(mosaic_factory.images)
-    print "calculating transition graph:"
+    print("calculating transition graph:")
     for i, img in enumerate(mosaic_factory.images):
-        print " {0}/{1}".format(i + 1, len(mosaic_factory.images))
+        print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
         for line in mosaic_factory.mosaic(img, nb_segments, reuse):
             for pic in line:
                 try:

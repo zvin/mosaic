@@ -17,7 +17,7 @@ class MosaicFactory(object):
 
     @staticmethod
     def color_difference(clr1, clr2):
-        return sum(map(lambda (x1, x2): abs(x1 - x2), zip(clr1, clr2)))
+        return sum(map(lambda c: abs(c[0] - c[1]), zip(clr1, clr2)))
 
     @staticmethod
     def find_nearest_image(color, images):
@@ -81,9 +81,9 @@ class MosaicFactory(object):
             data = {}
         images_dict = data.get("images", {})
         filenames = MosaicFactory.list_image_files(folder)
-        print "calculating average colors:"
+        print("calculating average colors:")
         for i, filename in enumerate(filenames):
-            print " {0}/{1}".format(i + 1, len(filenames))
+            print(" {0}/{1}".format(i + 1, len(filenames)))
             image_path = os.path.join(folder, filename)
             image_dict = images_dict.get(filename)
             mtime = os.path.getmtime(image_path)
@@ -122,7 +122,7 @@ class MosaicFactory(object):
                     ),
                     (j * pane_width, i * pane_height)
                 )
-                print "%3d/%3d" % (i * nb_segments + j, nb_segments**2)
+                print("%3d/%3d" % (i * nb_segments + j, nb_segments**2))
         return res
 
 
