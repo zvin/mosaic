@@ -38,10 +38,7 @@ class MosaicFactory(object):
         for line in pixels:
             res.append([])
             for pixel in line:
-                nearest = MosaicFactory.find_nearest_image(
-                    pixel,
-                    available_images
-                )
+                nearest = MosaicFactory.find_nearest_image(pixel, available_images)
                 res[-1].append(nearest)
                 if not reuse:
                     available_images.remove(nearest)
@@ -53,8 +50,7 @@ class MosaicFactory(object):
             json.dump(
                 {
                     "images": dict(
-                        (os.path.basename(i.path), i.to_dict())
-                        for i in self.images
+                        (os.path.basename(i.path), i.to_dict()) for i in self.images
                     ),
                 },
                 _file,
@@ -65,7 +61,8 @@ class MosaicFactory(object):
     @staticmethod
     def list_image_files(folder):
         return [
-            name for name in os.listdir(folder)
+            name
+            for name in os.listdir(folder)
             if name.lower().endswith(".jpg")
             or name.lower().endswith(".jpeg")
             or name.lower().endswith(".png")
@@ -116,11 +113,8 @@ class MosaicFactory(object):
             for j, img in enumerate(line):
                 image = img.get_image()
                 res.paste(
-                    image.resize(
-                        (pane_width, pane_height),
-                        Image.ANTIALIAS
-                    ),
-                    (j * pane_width, i * pane_height)
+                    image.resize((pane_width, pane_height), Image.ANTIALIAS),
+                    (j * pane_width, i * pane_height),
                 )
                 print("%3d/%3d" % (i * nb_segments + j, nb_segments**2))
         return res
@@ -129,6 +123,7 @@ class MosaicFactory(object):
 # TODO: remove main
 if __name__ == "__main__":
     from sys import argv
+
     folder = argv[1]
     factory = MosaicFactory.load(folder)
     factory.save()

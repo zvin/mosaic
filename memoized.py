@@ -6,6 +6,7 @@ class memoized(object):
     If called later with the same arguments, the cached value is returned, and
     not re-evaluated.
     """
+
     def __init__(self, func):
         self.func = func
         self.cache = {}

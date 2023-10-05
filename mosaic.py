@@ -35,35 +35,27 @@ from OpenGL.GLUT import glutMainLoop
 from OpenGL.GLUT import GLUT_DOUBLE, GLUT_RGB, GLUT_ELAPSED_TIME
 
 parser = argparse.ArgumentParser(description="Photos mosaic visualization")
+parser.add_argument("folder", type=str, help="folder containing photos")
 parser.add_argument(
-    "folder",
-    type=str,
-    help="folder containing photos"
+    "-t", "--tiles", type=int, default=40, help="number of tiles in each mosaic"
 )
 parser.add_argument(
-    "-t", "--tiles",
-    type=int,
-    default=40,
-    help="number of tiles in each mosaic"
-)
-parser.add_argument(
-    "-p", "--pixels-limit",
+    "-p",
+    "--pixels-limit",
     type=int,
     default=640 * 480,
-    help="maximum number of pixels for each texture (defaults to 640x480)"
+    help="maximum number of pixels for each texture (defaults to 640x480)",
 )
 parser.add_argument(
-    "-d", "--duration",
-    type=float,
-    default=10.,
-    help="zooming out duration in seconds"
+    "-d", "--duration", type=float, default=10.0, help="zooming out duration in seconds"
 )
 parser.add_argument(
-    "-n", "--no-reuse",
+    "-n",
+    "--no-reuse",
     dest="reuse",
     action="store_false",
     help="a tile can only be used once in a photo (this requires that tiles²"
-         " <= #photos in folder"
+    " <= #photos in folder",
 )
 
 
@@ -135,13 +127,8 @@ def draw_mosaic(picture):
     for column in range(args.tiles):
         for line in range(args.tiles):
             glPushMatrix()
-            glTranslatef(
-                column * mosaic_factory.ratio * size,
-                line * size, 0.0
-            )
-            glCallList(
-                picture_display_lists[m[args.tiles - 1 - line][column]]
-            )
+            glTranslatef(column * mosaic_factory.ratio * size, line * size, 0.0)
+            glCallList(picture_display_lists[m[args.tiles - 1 - line][column]])
             glPopMatrix()
 
 
@@ -199,16 +186,15 @@ def angle_difference(a1, a2):
 def display():
     start_point = (
         start_picture_coord[0] * HEIGHT * mosaic_factory.ratio / (args.tiles - 1),
-        start_picture_coord[1] * HEIGHT / (args.tiles - 1)
+        start_picture_coord[1] * HEIGHT / (args.tiles - 1),
     )
-    center = (HEIGHT * mosaic_factory.ratio / 2., HEIGHT / 2.)
+    center = (HEIGHT * mosaic_factory.ratio / 2.0, HEIGHT / 2.0)
     reverse_sigmoid_progress = fake_sigmoid(1 - progress)
     sigmoid_progress = 1 - reverse_sigmoid_progress
     max_zoom = args.tiles
-    zoom = max_zoom ** reverse_sigmoid_progress
+    zoom = max_zoom**reverse_sigmoid_progress
     angle = start_orientation + sigmoid_progress * angle_difference(
-        current_mosaic_picture.orientation,
-        start_orientation
+        current_mosaic_picture.orientation, start_orientation
     )
     if reverse_sigmoid_progress > 0.1:
         alpha = 1.0
@@ -242,7 +228,7 @@ def spin_display():
     global current_mosaic_picture
     global start_picture_coord
     global start_orientation
-    duration = args.duration * 1000.
+    duration = args.duration * 1000.0
     old_progress = progress
     progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
     if progress < old_progress:
@@ -251,11 +237,7 @@ def spin_display():
         current_mosaic_picture = iterator.__next__()
         start_picture_coord = find_picture_in_mosaic(
             current_tile_picture,
-            mosaic_factory.mosaic(
-                current_mosaic_picture,
-                args.tiles,
-                args.reuse
-            )
+            mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse),
         )
     glutPostRedisplay()
 
@@ -304,7 +286,7 @@ if __name__ == "__main__":
 
     mosaic_factory = MosaicFactory.load(args.folder)
 
-    HEIGHT = 100.
+    HEIGHT = 100.0
     size = HEIGHT / args.tiles
 
     iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
@@ -314,7 +296,7 @@ if __name__ == "__main__":
 
     start_picture_coord = find_picture_in_mosaic(
         current_tile_picture,
-        mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse)
+        mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse),
     )
 
     glutInit(sys.argv)
