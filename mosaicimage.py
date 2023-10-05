@@ -22,7 +22,7 @@ class MosaicImage(object):
         self.ratio = image.size[0] / float(image.size[1])
 
     def calculate_average_color(self, image):
-        self.average_color = image.resize((1, 1), Image.ANTIALIAS).getpixel((0, 0))
+        self.average_color = image.resize((1, 1), Image.Resampling.LANCZOS).getpixel((0, 0))
 
     def calculate_orientation(self, image):
         orientations = {1: 0, 3: 180, 6: 270, 8: 90}
@@ -33,7 +33,7 @@ class MosaicImage(object):
         self.orientation = orientations.get(exif_orientation, 0)
 
     def calculate_grid(self, nb_segments, image):
-        small = image.resize((nb_segments, nb_segments), Image.ANTIALIAS)
+        small = image.resize((nb_segments, nb_segments), Image.Resampling.LANCZOS)
         data = small.getdata()
         res = []
         for i in range(nb_segments):

@@ -77,7 +77,7 @@ def limit_pixels_count(image, limit):
         ratio = sqrt(limit / float(pixels_count))
         new_width = int(round(width * ratio))
         new_height = int(round(height * ratio))
-        return image.resize((new_width, new_height), Image.ANTIALIAS)
+        return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
     else:
         return image
 
