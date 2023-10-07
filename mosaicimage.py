@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from PIL import Image
 
 
@@ -12,11 +14,12 @@ class MosaicImage(object):
     def __lt__(self, other):
         return self.path < other.path
 
-    def get_image(self):
-        image = Image.open(self.path)
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-        return image
+    @contextmanager
+    def open_image(self):
+        with Image.open(self.path) as image:
+            if image.mode != "RGB":
+                image = image.convert("RGB")
+            yield image
 
     def calculate_ratio(self, image):
         self.ratio = image.size[0] / float(image.size[1])
@@ -67,8 +70,8 @@ class MosaicImage(object):
         img = cls()
         img.path = path
         img.mtime = mtime
-        image = img.get_image()
-        img.calculate_average_color(image)
-        img.calculate_ratio(image)
-        img.calculate_orientation(image)
+        with img.open_image() as image:
+            img.calculate_average_color(image)
+            img.calculate_ratio(image)
+            img.calculate_orientation(image)
         return img

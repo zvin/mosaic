@@ -294,7 +294,8 @@ def init():
     print("loading textures:")
     for i, img in enumerate(mosaic_factory.images):
         print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
-        textures[img] = load_texture(img.get_image())
+        with img.open_image() as image:
+            textures[img] = load_texture(image)
         generate_picture_display_list(img, width, height)
     print("generating mosaic display lists:")
     for i, img in enumerate(mosaic_factory.images):
