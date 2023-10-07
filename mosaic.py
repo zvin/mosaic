@@ -337,6 +337,7 @@ if __name__ == "__main__":
     size = HEIGHT / args.tiles
 
     iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
+    mosaic_factory.cache.save()
     current_tile_picture = iterator.__next__()
     current_mosaic_picture = iterator.__next__()
     start_orientation = current_tile_picture.orientation
@@ -349,7 +350,7 @@ if __name__ == "__main__":
     glutInit(sys.argv)
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
     glutInitWindowSize(640, 480)
-    glutCreateWindow("Mosaic for " + args.folder)
+    glutCreateWindow("Mosaic for {}".format(args.folder))
     init()
     glutDisplayFunc(display)
     glutReshapeFunc(reshape)
