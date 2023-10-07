@@ -4,35 +4,82 @@
 import argparse
 import math
 import sys
-
 from math import sqrt
+
+from OpenGL.GL import (
+    GL_BLEND,
+    GL_CLAMP,
+    GL_COLOR_BUFFER_BIT,
+    GL_COMPILE,
+    GL_DECAL,
+    GL_FLAT,
+    GL_MODELVIEW,
+    GL_NEAREST,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_PROJECTION,
+    GL_QUADS,
+    GL_REPEAT,
+    GL_RGBA,
+    GL_SRC_ALPHA,
+    GL_TEXTURE_2D,
+    GL_TEXTURE_ENV,
+    GL_TEXTURE_ENV_MODE,
+    GL_TEXTURE_MAG_FILTER,
+    GL_TEXTURE_MIN_FILTER,
+    GL_TEXTURE_WRAP_S,
+    GL_TEXTURE_WRAP_T,
+    GL_UNPACK_ALIGNMENT,
+    GL_UNSIGNED_BYTE,
+    glBegin,
+    glBindTexture,
+    glBlendFunc,
+    glCallList,
+    glClear,
+    glClearColor,
+    glColor4f,
+    glEnable,
+    glEnd,
+    glEndList,
+    glGenLists,
+    glGenTextures,
+    glLoadIdentity,
+    glMatrixMode,
+    glNewList,
+    glOrtho,
+    glPixelStorei,
+    glPopMatrix,
+    glPushMatrix,
+    glRotatef,
+    glScalef,
+    glShadeModel,
+    glTexCoord2f,
+    glTexEnvf,
+    glTexImage2D,
+    glTexParameterf,
+    glTranslatef,
+    glVertex2f,
+    glViewport,
+)
+from OpenGL.GLUT import (
+    GLUT_DOUBLE,
+    GLUT_ELAPSED_TIME,
+    GLUT_RGB,
+    glutCreateWindow,
+    glutDisplayFunc,
+    glutGet,
+    glutIdleFunc,
+    glutInit,
+    glutInitDisplayMode,
+    glutInitWindowSize,
+    glutMainLoop,
+    glutPostRedisplay,
+    glutReshapeFunc,
+    glutSwapBuffers,
+)
 from PIL import Image
 
 from graph import image_iterator
 from mosaicfactory import MosaicFactory
-
-from OpenGL.GL import glGenTextures, glBindTexture, glPixelStorei, glTexImage2D
-from OpenGL.GL import glTexParameterf, glTexEnvf, glGenLists, glNewList
-from OpenGL.GL import glEndList, glPushMatrix, glPopMatrix, glTranslatef
-from OpenGL.GL import glRotatef, glScalef, glBegin, glEnd, glTexCoord2f
-from OpenGL.GL import glVertex2f, glCallList, glEnable, glBlendFunc, glColor4f
-from OpenGL.GL import glClearColor, glShadeModel, glClear, glViewport
-from OpenGL.GL import glMatrixMode, glLoadIdentity, glOrtho
-
-from OpenGL.GL import GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T
-from OpenGL.GL import GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER
-from OpenGL.GL import GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE
-from OpenGL.GL import GL_UNSIGNED_BYTE, GL_CLAMP, GL_UNPACK_ALIGNMENT, GL_RGBA
-from OpenGL.GL import GL_DECAL, GL_COMPILE, GL_QUADS, GL_REPEAT, GL_NEAREST
-from OpenGL.GL import GL_BLEND, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_FLAT
-from OpenGL.GL import GL_COLOR_BUFFER_BIT, GL_PROJECTION, GL_MODELVIEW
-
-from OpenGL.GLUT import glutSwapBuffers, glutGet, glutPostRedisplay, glutInit
-from OpenGL.GLUT import glutInitDisplayMode, glutInitWindowSize, glutIdleFunc
-from OpenGL.GLUT import glutCreateWindow, glutDisplayFunc, glutReshapeFunc
-from OpenGL.GLUT import glutMainLoop
-
-from OpenGL.GLUT import GLUT_DOUBLE, GLUT_RGB, GLUT_ELAPSED_TIME
 
 parser = argparse.ArgumentParser(description="Photos mosaic visualization")
 parser.add_argument("folder", type=str, help="folder containing photos")

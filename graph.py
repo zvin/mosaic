@@ -67,6 +67,7 @@ def image_iterator(mosaic_factory, nb_segments, reuse=True):
 
 if __name__ == "__main__":
     from sys import argv
+
     from pygraph.readwrite.dot import write
 
     mosaic_factory = MosaicFactory.load(argv[1])

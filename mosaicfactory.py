@@ -1,7 +1,7 @@
 import json
 import os
-
 from itertools import groupby
+
 from PIL import Image
 
 from memoized import memoized

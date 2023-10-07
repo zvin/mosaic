@@ -22,7 +22,9 @@ class MosaicImage(object):
         self.ratio = image.size[0] / float(image.size[1])
 
     def calculate_average_color(self, image):
-        self.average_color = image.resize((1, 1), Image.Resampling.LANCZOS).getpixel((0, 0))
+        self.average_color = image.resize((1, 1), Image.Resampling.LANCZOS).getpixel(
+            (0, 0)
+        )
 
     def calculate_orientation(self, image):
         orientations = {1: 0, 3: 180, 6: 270, 8: 90}
