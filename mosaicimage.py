@@ -91,10 +91,6 @@ class MosaicImage(object):
                 yield resized
 
     def get_grid(self, nb_segments):
-        # TODO: remove this
-        return self.calculate_grid(nb_segments)
-
-    def calculate_grid(self, nb_segments):
         with self.resized(nb_segments, nb_segments) as small:
             data = small.getdata()
         res = []
