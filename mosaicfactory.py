@@ -37,7 +37,7 @@ class MosaicFactory(object):
 
     def cached_mosaic(self, img, nb_segments, reuse=True):
         dir = path.join(CACHE_DIR, "mosaics", self.hash(), str(nb_segments), str(reuse))
-        fpath = path.join(dir, img.hash)
+        fpath = path.join(dir, "{}.json".format(img.hash))
         try:
             with open(fpath, "r") as f:
                 data = json.load(f)

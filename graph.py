@@ -28,11 +28,10 @@ def deserialize_digraph(data, images):
 
 
 def load_from_cache(mosaic_factory, nb_segments, reuse=True):
-    # TODO
     dir = path.join(
         CACHE_DIR, "mosaics", mosaic_factory.hash(), str(nb_segments), str(reuse)
     )
-    fpath = path.join(dir, "graph")
+    fpath = path.join(dir, "graph.json")
     try:
         with open(fpath, "r") as f:
             return deserialize_digraph(json.load(f), mosaic_factory.images)
