@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import json
-from os import listdir, makedirs, path
+from os import makedirs, path
 
 from pygraph.algorithms.accessibility import mutual_accessibility
 from pygraph.classes.digraph import digraph
@@ -36,7 +36,7 @@ def load_from_cache(mosaic_factory, nb_segments, reuse=True):
     try:
         with open(fpath, "r") as f:
             return deserialize_digraph(json.load(f), mosaic_factory.images)
-    except:
+    except (IOError, json.JSONDecodeError):
         gr = transition_graph(mosaic_factory, nb_segments, reuse)
         makedirs(dir, exist_ok=True)
         with open(fpath, "w") as f:

@@ -25,7 +25,7 @@ def calculate_orientation(image):
     orientations = {1: 0, 3: 180, 6: 270, 8: 90}
     try:
         exif_orientation = image._getexif().get(274)
-    except:
+    except KeyError:
         exif_orientation = 1
     return orientations.get(exif_orientation, 0)
 
@@ -44,7 +44,7 @@ class MosaicImage(object):
                 self.orientation = data["orientation"]
                 self.width = data["width"]
                 self.height = data["height"]
-        except:
+        except (IOError, json.JSONDecodeError):
             with self.open_image() as image:
                 self.average_color = calculate_average_color(image)
                 self.ratio = calculate_ratio(image)

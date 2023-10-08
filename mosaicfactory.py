@@ -42,7 +42,7 @@ class MosaicFactory(object):
             with open(fpath, "r") as f:
                 data = json.load(f)
                 return [[self.images[hash] for hash in line] for line in data]
-        except:
+        except (IOError, json.JSONDecodeError):
             m = self.mosaic(img, nb_segments, reuse)
             data = [[img.hash for img in line] for line in m]
             makedirs(dir, exist_ok=True)
@@ -83,8 +83,11 @@ class MosaicFactory(object):
             image_path = path.join(folder, filename)
             img = MosaicImage(image_path)
             all_images.append(img)
+
         # group images by ratio
-        get_ratio = lambda img: img.ratio
+        def get_ratio(img):
+            return img.ratio
+
         all_images.sort(key=get_ratio)
         image_groups = []
         for ratio, images in groupby(all_images, key=get_ratio):

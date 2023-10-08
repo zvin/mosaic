@@ -61,7 +61,6 @@ from OpenGL.GL import (
     glVertex2f,
     glViewport,
 )
-from PIL import Image
 
 from graph import image_iterator
 from mosaicfactory import MosaicFactory
@@ -310,7 +309,19 @@ def reshape(w, h):
 
 
 def main():
-    global mosaic_factory, size, args, progress, textures, picture_display_lists, mosaic_display_lists, start_picture_coord, HEIGHT, start_orientation, current_mosaic_picture, iterator
+    global mosaic_factory
+    global size
+    global args
+    global progress
+    global textures
+    global picture_display_lists
+    global mosaic_display_lists
+    global start_picture_coord
+    global HEIGHT
+    global start_orientation
+    global current_mosaic_picture
+    global iterator
+
     args = parser.parse_args()
 
     progress = 0.0
@@ -346,7 +357,7 @@ def main():
     if not window:
         sys.stderr.write("Error: Could not create window\n")
         exit(1)
-    glcontext = sdl2.SDL_GL_CreateContext(window)
+    sdl2.SDL_GL_CreateContext(window)
     init()
     reshape(640, 480)
 

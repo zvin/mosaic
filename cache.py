@@ -1,6 +1,3 @@
-import json
-from os import makedirs, path
-
 from platformdirs import user_cache_dir
 
 APP_NAME = "glmosaic"
