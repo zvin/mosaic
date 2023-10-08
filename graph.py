@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
+import json
+from os import listdir, makedirs, path
+
 from pygraph.algorithms.accessibility import mutual_accessibility
 from pygraph.classes.digraph import digraph
 from pygraph.classes.exceptions import AdditionError
 
+from cache import CACHE_DIR
 from mosaicfactory import MosaicFactory
 
 
@@ -15,38 +19,38 @@ def serialize_digraph(gr):
 
 def deserialize_digraph(data, images):
     gr = digraph()
-    gr.add_nodes(images)
+    gr.add_nodes(images.values())
     for edge in data["edges"]:
-        img0 = [i for i in images if i.hash == edge[0]][0]
-        img1 = [i for i in images if i.hash == edge[1]][0]
+        img0 = images[edge[0]]
+        img1 = images[edge[1]]
         gr.add_edge((img0, img1))
     return gr
 
 
 def load_from_cache(mosaic_factory, nb_segments, reuse=True):
-    graph_hash = "".join(sorted([i.hash for i in mosaic_factory.images]))
-    data = (
-        mosaic_factory.cache.graphs.setdefault(graph_hash, {})
-        .setdefault(str(nb_segments), {})
-        .get(str(reuse))
+    # TODO
+    dir = path.join(
+        CACHE_DIR, "mosaics", mosaic_factory.hash(), str(nb_segments), str(reuse)
     )
-    if data is not None:
-        return deserialize_digraph(data, mosaic_factory.images)
-    gr = transition_graph(mosaic_factory, nb_segments, reuse)
-    mosaic_factory.cache.graphs.setdefault(graph_hash, {}).setdefault(
-        str(nb_segments), {}
-    )[str(reuse)] = serialize_digraph(gr)
-    print("saved", graph_hash)
-    return gr
+    fpath = path.join(dir, "graph")
+    try:
+        with open(fpath, "r") as f:
+            return deserialize_digraph(json.load(f), mosaic_factory.images)
+    except:
+        gr = transition_graph(mosaic_factory, nb_segments, reuse)
+        makedirs(dir, exist_ok=True)
+        with open(fpath, "w") as f:
+            json.dump(serialize_digraph(gr), f)
+        return gr
 
 
 def transition_graph(mosaic_factory, nb_segments, reuse=True):
     gr = digraph()
-    gr.add_nodes(mosaic_factory.images)
+    gr.add_nodes(mosaic_factory.images.values())
     print("calculating transition graph:")
-    for i, img in enumerate(mosaic_factory.images):
+    for i, img in enumerate(mosaic_factory.images.values()):
         print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
-        for line in mosaic_factory.mosaic(img, nb_segments, reuse):
+        for line in mosaic_factory.cached_mosaic(img, nb_segments, reuse):
             for pic in line:
                 try:
                     gr.add_edge((pic, img))

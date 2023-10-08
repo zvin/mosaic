@@ -1,18 +1,24 @@
+import hashlib
+import json
 from itertools import groupby
-from os import listdir, path
+from os import listdir, makedirs, path
 
 from PIL import Image
 
-from cache import Cache
+from cache import CACHE_DIR
 from memoized import memoized
 from mosaicimage import MosaicImage
 
 
 class MosaicFactory(object):
     def __init__(self):
-        self.cache = Cache()
         self.ratio = None
-        self.images = []
+        self.images = {}
+
+    def hash(self):
+        return hashlib.md5(
+            "".join(sorted([img.hash for img in self.images.values()])).encode("utf8")
+        ).hexdigest()
 
     @staticmethod
     def color_difference(clr1, clr2):
@@ -29,10 +35,25 @@ class MosaicFactory(object):
                 nearest = img
         return nearest
 
+    def cached_mosaic(self, img, nb_segments, reuse=True):
+        dir = path.join(CACHE_DIR, "mosaics", self.hash(), str(nb_segments), str(reuse))
+        fpath = path.join(dir, img.hash)
+        try:
+            with open(fpath, "r") as f:
+                data = json.load(f)
+                return [[self.images[hash] for hash in line] for line in data]
+        except:
+            m = self.mosaic(img, nb_segments, reuse)
+            data = [[img.hash for img in line] for line in m]
+            makedirs(dir, exist_ok=True)
+            with open(fpath, "w") as f:
+                json.dump(data, f)
+            return m
+
     @memoized
-    def mosaic(self, image, nb_segments, reuse=True):
-        available_images = self.images[:]
-        pixels = image.get_grid(nb_segments)
+    def mosaic(self, img, nb_segments, reuse=True):
+        available_images = list(self.images.values())[:]  # TODO: unneded copy
+        pixels = img.get_grid(nb_segments)
         res = []
         for line in pixels:
             res.append([])
@@ -60,7 +81,7 @@ class MosaicFactory(object):
         for i, filename in enumerate(filenames):
             print(" {0}/{1}".format(i + 1, len(filenames)))
             image_path = path.join(folder, filename)
-            img = MosaicImage(self.cache, image_path)
+            img = MosaicImage(image_path)
             all_images.append(img)
         # group images by ratio
         get_ratio = lambda img: img.ratio
@@ -70,8 +91,8 @@ class MosaicFactory(object):
             image_groups.append(list(images))
         # take only the largest group
         image_groups.sort(key=len, reverse=True)
-        self.images = image_groups[0]
-        self.ratio = self.images[0].ratio
+        self.images = {image.hash: image for image in image_groups[0]}
+        self.ratio = image_groups[0][0].ratio
 
     @staticmethod
     def render_mosaic(mosaic, width, height):
@@ -81,13 +102,8 @@ class MosaicFactory(object):
         res = Image.new("RGB", (width, height), (0, 0, 0))
         for i, line in enumerate(mosaic):
             for j, img in enumerate(line):
-                with img.open_image() as image:
-                    res.paste(
-                        image.resize(
-                            (pane_width, pane_height), Image.Resampling.LANCZOS
-                        ),
-                        (j * pane_width, i * pane_height),
-                    )
+                with img.resized(pane_width, pane_height) as image:
+                    res.paste(image, (j * pane_width, i * pane_height))
                 print("%3d/%3d" % (i * nb_segments + j, nb_segments**2))
         return res
 
@@ -98,7 +114,6 @@ if __name__ == "__main__":
 
     folder = argv[1]
     factory = MosaicFactory.load(folder)
-    factory.cache.save()
 
-#    mosaic = factory.mosaic(m.images[0], 40)
+#    mosaic = factory.cached_mosaic(m.images[0], 40)
 #    img = MosaicFactory.render_mosaic(mosaic, 1024, 768)

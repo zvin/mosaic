@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from contextlib import contextmanager
 from math import exp, sqrt
 
 from OpenGL.GL import (
@@ -115,32 +116,32 @@ def find_picture_in_mosaic(picture, mosaic):
     return (x, len(mosaic) - y - 1)
 
 
-def limit_pixels_count(image, limit):
-    width, height = image.size
-    pixels_count = width * height
+@contextmanager
+def limit_pixels_count(img, limit):
+    pixels_count = img.width * img.height
     if pixels_count > limit:
         ratio = sqrt(limit / float(pixels_count))
-        new_width = int(round(width * ratio))
-        new_height = int(round(height * ratio))
-        return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        new_width = int(round(img.width * ratio))
+        new_height = int(round(img.height * ratio))
+        with img.resized(new_width, new_height) as image:
+            yield image
     else:
-        return image
+        with img.open_image() as image:
+            yield image
 
 
-def load_texture(image):
-    image = limit_pixels_count(image, args.pixels_limit)
+def load_texture(img):
+    with limit_pixels_count(img, args.pixels_limit) as image:
+        width, height = image.size
+        image = image.tobytes("raw", "RGBX", 0, -1)
+        # Create Texture
+        _id = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, _id)
 
-    width, height = image.size
-    image = image.tobytes("raw", "RGBX", 0, -1)
-
-    # Create Texture
-    _id = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, _id)
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image
-    )
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image
+        )
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
@@ -168,7 +169,7 @@ def generate_mosaic_display_list(picture):
 
 
 def draw_mosaic(picture):
-    m = mosaic_factory.mosaic(picture, args.tiles, args.reuse)
+    m = mosaic_factory.cached_mosaic(picture, args.tiles, args.reuse)
     for column in range(args.tiles):
         for line in range(args.tiles):
             glPushMatrix()
@@ -282,7 +283,9 @@ def spin_display():
         current_mosaic_picture = iterator.__next__()
         start_picture_coord = find_picture_in_mosaic(
             current_tile_picture,
-            mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse),
+            mosaic_factory.cached_mosaic(
+                current_mosaic_picture, args.tiles, args.reuse
+            ),
         )
     glutPostRedisplay()
 
@@ -291,13 +294,12 @@ def init():
     width = mosaic_factory.ratio * size
     height = size
     print("loading textures:")
-    for i, img in enumerate(mosaic_factory.images):
+    for i, img in enumerate(mosaic_factory.images.values()):
         print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
-        with img.open_image() as image:
-            textures[img] = load_texture(image)
+        textures[img] = load_texture(img)
         generate_picture_display_list(img, width, height)
     print("generating mosaic display lists:")
-    for i, img in enumerate(mosaic_factory.images):
+    for i, img in enumerate(mosaic_factory.images.values()):
         print(" {0}/{1}".format(i + 1, len(mosaic_factory.images)))
         generate_mosaic_display_list(img)
 
@@ -322,7 +324,8 @@ def reshape(w, h):
     glLoadIdentity()
 
 
-if __name__ == "__main__":
+def main():
+    global mosaic_factory, size, args, progress, textures, picture_display_lists, mosaic_display_lists, start_picture_coord, HEIGHT, start_orientation, current_mosaic_picture, iterator
     args = parser.parse_args()
 
     progress = 0.0
@@ -337,14 +340,13 @@ if __name__ == "__main__":
     size = HEIGHT / args.tiles
 
     iterator = image_iterator(mosaic_factory, args.tiles, args.reuse)
-    mosaic_factory.cache.save()
     current_tile_picture = iterator.__next__()
     current_mosaic_picture = iterator.__next__()
     start_orientation = current_tile_picture.orientation
 
     start_picture_coord = find_picture_in_mosaic(
         current_tile_picture,
-        mosaic_factory.mosaic(current_mosaic_picture, args.tiles, args.reuse),
+        mosaic_factory.cached_mosaic(current_mosaic_picture, args.tiles, args.reuse),
     )
 
     glutInit(sys.argv)
@@ -356,3 +358,7 @@ if __name__ == "__main__":
     glutReshapeFunc(reshape)
     glutIdleFunc(spin_display)
     glutMainLoop()
+
+
+if __name__ == "__main__":
+    main()

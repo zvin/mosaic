@@ -1,7 +1,11 @@
 import hashlib
+import json
 from contextlib import contextmanager
+from os import makedirs, path
 
 from PIL import Image
+
+from cache import CACHE_DIR
 
 
 def hash_file(fpath):
@@ -27,31 +31,43 @@ def calculate_orientation(image):
 
 
 class MosaicImage(object):
-    def __init__(self, cache, path):
-        self.path = path
-        self.cache = cache
-        self.hash = hash_file(path)
-        data = self.cache.images.get(self.hash)
-        if data is not None:
-            self.average_color = data["average_color"]
-            self.ratio = data["ratio"]
-            self.orientation = data["orientation"]
-        else:
+    def __init__(self, image_path):
+        self.path = image_path
+        self.hash = hash_file(self.path)
+        thumbnails_dir = path.join(CACHE_DIR, "images", self.hash)
+        fpath = path.join(thumbnails_dir, "data.json")
+        try:
+            with open(fpath, "r") as f:
+                data = json.load(f)
+                self.average_color = data["average_color"]
+                self.ratio = data["ratio"]
+                self.orientation = data["orientation"]
+                self.width = data["width"]
+                self.height = data["height"]
+        except:
             with self.open_image() as image:
                 self.average_color = calculate_average_color(image)
                 self.ratio = calculate_ratio(image)
                 self.orientation = calculate_orientation(image)
-            self.cache.images[self.hash] = {
-                "average_color": self.average_color,
-                "ratio": self.ratio,
-                "orientation": self.orientation,
-            }
+                width, height = image.size
+                self.width = width
+                self.height = height
+            makedirs(thumbnails_dir, exist_ok=True)
+            with open(fpath, "w") as f:
+                json.dump(
+                    {
+                        "average_color": self.average_color,
+                        "ratio": self.ratio,
+                        "orientation": self.orientation,
+                        "width": self.width,
+                        "height": self.height,
+                    },
+                    f,
+                    indent=4,
+                )
 
     def __lt__(self, other):
         return self.path < other.path
-
-    def __hash(self):
-        return self.hash
 
     @contextmanager
     def open_image(self):
@@ -60,19 +76,27 @@ class MosaicImage(object):
                 image = image.convert("RGB")
             yield image
 
+    @contextmanager
+    def resized(self, width, height):
+        thumbnails_dir = path.join(CACHE_DIR, "images", self.hash)
+        makedirs(thumbnails_dir, exist_ok=True)
+        fpath = path.join(thumbnails_dir, "{}x{}".format(width, height))
+        try:
+            with Image.open(fpath) as image:
+                yield image
+        except FileNotFoundError:
+            with self.open_image() as image:
+                resized = image.resize((width, height), Image.Resampling.LANCZOS)
+                resized.save(fpath, "PNG")  # TODO: use jpeg for large images
+                yield resized
+
     def get_grid(self, nb_segments):
-        grid = (
-            self.cache.images[self.hash].setdefault("grids", {}).get(str(nb_segments))
-        )
-        if grid is None:
-            grid = self.calculate_grid(nb_segments)
-            self.cache.images[self.hash]["grids"][str(nb_segments)] = grid
-        return grid
+        # TODO: remove this
+        return self.calculate_grid(nb_segments)
 
     def calculate_grid(self, nb_segments):
-        with self.open_image() as image:
-            small = image.resize((nb_segments, nb_segments), Image.Resampling.LANCZOS)
-        data = small.getdata()
+        with self.resized(nb_segments, nb_segments) as small:
+            data = small.getdata()
         res = []
         for i in range(nb_segments):
             res.append([])
