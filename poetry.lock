@@ -216,6 +216,16 @@ files = [
 ]
 
 [[package]]
+name = "pysdl2"
+version = "0.9.16"
+description = "Python SDL2 bindings"
+optional = false
+python-versions = "*"
+files = [
+    {file = "PySDL2-0.9.16.tar.gz", hash = "sha256:1027406badbecdd30fe56e800a5a76ad7d7271a3aec0b7acf780ee26a00f2d40"},
+]
+
+[[package]]
 name = "python-graph-core"
 version = "1.8.2"
 description = "A library for working with graphs in Python"
@@ -250,4 +260,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "54b8201f3459c406cf2c8c037e3724d30d6c263be6344e1fe0b1bf7c54cb4a1c"
+content-hash = "eea01a4da6f15a85e83db6e59516a0dc7747f64d4aa65588a2e0ed6916db1b51"

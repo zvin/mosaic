@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
+import ctypes
 import sys
 from contextlib import contextmanager
 from math import exp, sqrt
 
+import sdl2
 from OpenGL.GL import (
     GL_BLEND,
     GL_CLAMP,
@@ -58,22 +60,6 @@ from OpenGL.GL import (
     glTranslatef,
     glVertex2f,
     glViewport,
-)
-from OpenGL.GLUT import (
-    GLUT_DOUBLE,
-    GLUT_ELAPSED_TIME,
-    GLUT_RGB,
-    glutCreateWindow,
-    glutDisplayFunc,
-    glutGet,
-    glutIdleFunc,
-    glutInit,
-    glutInitDisplayMode,
-    glutInitWindowSize,
-    glutMainLoop,
-    glutPostRedisplay,
-    glutReshapeFunc,
-    glutSwapBuffers,
 )
 from PIL import Image
 
@@ -266,7 +252,6 @@ def display():
     glCallList(picture_display_lists[current_mosaic_picture])
 
     glPopMatrix()
-    glutSwapBuffers()
 
 
 def spin_display():
@@ -274,9 +259,10 @@ def spin_display():
     global current_mosaic_picture
     global start_picture_coord
     global start_orientation
-    duration = args.duration * 1000.0
+    duration = args.duration
     old_progress = progress
-    progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
+    elapsed_time = sdl2.SDL_GetTicks() / 1000
+    progress = (elapsed_time % duration) / duration
     if progress < old_progress:
         current_tile_picture = current_mosaic_picture
         start_orientation = current_mosaic_picture.orientation
@@ -287,7 +273,6 @@ def spin_display():
                 current_mosaic_picture, args.tiles, args.reuse
             ),
         )
-    glutPostRedisplay()
 
 
 def init():
@@ -349,15 +334,36 @@ def main():
         mosaic_factory.cached_mosaic(current_mosaic_picture, args.tiles, args.reuse),
     )
 
-    glutInit(sys.argv)
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-    glutInitWindowSize(640, 480)
-    glutCreateWindow("Mosaic for {}".format(args.folder))
+    sdl2.SDL_Init(sdl2.SDL_INIT_EVERYTHING)
+    window = sdl2.SDL_CreateWindow(
+        "Mosaic for {}".format(args.folder).encode("utf8"),
+        sdl2.SDL_WINDOWPOS_CENTERED,
+        sdl2.SDL_WINDOWPOS_CENTERED,
+        640,
+        480,
+        sdl2.SDL_WINDOW_OPENGL | sdl2.SDL_WINDOW_SHOWN | sdl2.SDL_WINDOW_RESIZABLE,
+    )
+    if not window:
+        sys.stderr.write("Error: Could not create window\n")
+        exit(1)
+    glcontext = sdl2.SDL_GL_CreateContext(window)
     init()
-    glutDisplayFunc(display)
-    glutReshapeFunc(reshape)
-    glutIdleFunc(spin_display)
-    glutMainLoop()
+    reshape(640, 480)
+
+    event = sdl2.SDL_Event()
+    running = True
+    while running:
+        while sdl2.SDL_PollEvent(ctypes.byref(event)) != 0:
+            if event.type == sdl2.SDL_QUIT:
+                running = False
+            if (
+                event.type == sdl2.events.SDL_WINDOWEVENT
+                and event.window.event == sdl2.SDL_WINDOWEVENT_RESIZED
+            ):
+                reshape(event.window.data1, event.window.data2)
+        display()
+        spin_display()
+        sdl2.SDL_GL_SwapWindow(window)
 
 
 if __name__ == "__main__":
