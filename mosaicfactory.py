@@ -54,27 +54,24 @@ class MosaicFactory(object):
         ]
 
     def load(self, folder):
-        images_dict = self.cache.images
         filenames = MosaicFactory.list_image_files(folder)
         print("calculating average colors:")
+        all_images = []
         for i, filename in enumerate(filenames):
             print(" {0}/{1}".format(i + 1, len(filenames)))
             image_path = path.join(folder, filename)
-            image_dict = images_dict.get(hash)
             img = MosaicImage(self.cache, image_path)
-            self.images.append(img)
+            all_images.append(img)
         # group images by ratio
         get_ratio = lambda img: img.ratio
-        self.images.sort(key=get_ratio)
+        all_images.sort(key=get_ratio)
         image_groups = []
-        for ratio, images in groupby(self.images, key=get_ratio):
+        for ratio, images in groupby(all_images, key=get_ratio):
             image_groups.append(list(images))
         # take only the largest group
         image_groups.sort(key=len, reverse=True)
-        images = image_groups[0]
-        self.ratio = images[0].ratio
-        self.images = images
-        return self
+        self.images = image_groups[0]
+        self.ratio = self.images[0].ratio
 
     @staticmethod
     def render_mosaic(mosaic, width, height):

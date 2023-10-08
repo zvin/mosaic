@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
 import argparse
-import math
 import sys
-from math import sqrt
+from math import exp, sqrt
 
 from OpenGL.GL import (
     GL_BLEND,
@@ -200,7 +199,7 @@ def draw_picture(picture, x, y, width, height):
 
 
 def sigmoid(value):
-    return 1.0 / (1.0 + math.exp(-float(value)))
+    return 1.0 / (1.0 + exp(-float(value)))
 
 
 def sigmoid_0_1(value):
@@ -331,7 +330,8 @@ if __name__ == "__main__":
     picture_display_lists = {}
     mosaic_display_lists = {}
 
-    mosaic_factory = MosaicFactory().load(args.folder)
+    mosaic_factory = MosaicFactory()
+    mosaic_factory.load(args.folder)
 
     HEIGHT = 100.0
     size = HEIGHT / args.tiles

@@ -31,7 +31,7 @@ class MosaicImage(object):
         self.path = path
         self.cache = cache
         self.hash = hash_file(path)
-        data = self.cache.images[self.hash]
+        data = self.cache.images.get(self.hash)
         if data is not None:
             self.average_color = data["average_color"]
             self.ratio = data["ratio"]
@@ -49,6 +49,9 @@ class MosaicImage(object):
 
     def __lt__(self, other):
         return self.path < other.path
+
+    def __hash(self):
+        return self.hash
 
     @contextmanager
     def open_image(self):

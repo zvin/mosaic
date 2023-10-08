@@ -18,7 +18,7 @@ class Cache:
             with open(self.fname, "r") as f:
                 self.data = json.load(f)
         except:
-            self.data = {"version": 1, "images": {}}
+            self.data = {"version": 1, "images": {}, "graphs": {}}
 
     def save(self):
         makedirs(CACHE_DIR, exist_ok=True)
@@ -27,4 +27,8 @@ class Cache:
 
     @property
     def images(self):
-        return self.data["images"]
+        return self.data.setdefault("images", {})
+
+    @property
+    def graphs(self):
+        return self.data.setdefault("graphs", {})

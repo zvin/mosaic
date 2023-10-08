@@ -7,6 +7,39 @@ from pygraph.classes.exceptions import AdditionError
 from mosaicfactory import MosaicFactory
 
 
+def serialize_digraph(gr):
+    return {
+        "edges": [[edge[0].hash, edge[1].hash] for edge in gr.edges()],
+    }
+
+
+def deserialize_digraph(data, images):
+    gr = digraph()
+    gr.add_nodes(images)
+    for edge in data["edges"]:
+        img0 = [i for i in images if i.hash == edge[0]][0]
+        img1 = [i for i in images if i.hash == edge[1]][0]
+        gr.add_edge((img0, img1))
+    return gr
+
+
+def load_from_cache(mosaic_factory, nb_segments, reuse=True):
+    graph_hash = "".join(sorted([i.hash for i in mosaic_factory.images]))
+    data = (
+        mosaic_factory.cache.graphs.setdefault(graph_hash, {})
+        .setdefault(str(nb_segments), {})
+        .get(str(reuse))
+    )
+    if data is not None:
+        return deserialize_digraph(data, mosaic_factory.images)
+    gr = transition_graph(mosaic_factory, nb_segments, reuse)
+    mosaic_factory.cache.graphs.setdefault(graph_hash, {}).setdefault(
+        str(nb_segments), {}
+    )[str(reuse)] = serialize_digraph(gr)
+    print("saved", graph_hash)
+    return gr
+
+
 def transition_graph(mosaic_factory, nb_segments, reuse=True):
     gr = digraph()
     gr.add_nodes(mosaic_factory.images)
@@ -53,7 +86,7 @@ def next_node(g, node):
 
 
 def image_iterator(mosaic_factory, nb_segments, reuse=True):
-    gr = transition_graph(mosaic_factory, nb_segments, reuse)
+    gr = load_from_cache(mosaic_factory, nb_segments, reuse)
     c = biggest_strongly_connected_component(gr)
     init_visited(c)
 
@@ -71,6 +104,6 @@ if __name__ == "__main__":
     from pygraph.readwrite.dot import write
 
     mosaic_factory = MosaicFactory.load(argv[1])
-    gr = transition_graph(mosaic_factory, 4)
+    gr = load_from_cache(mosaic_factory, 4)
     with open("test.dot", "w") as _file:
         _file.write(write(gr))
