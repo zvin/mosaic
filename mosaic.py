@@ -5,6 +5,7 @@ import sys
 from contextlib import contextmanager
 from math import exp, sqrt
 
+import glfw
 from OpenGL.GL import (
     GL_BLEND,
     GL_CLAMP,
@@ -58,22 +59,6 @@ from OpenGL.GL import (
     glTranslatef,
     glVertex2f,
     glViewport,
-)
-from OpenGL.GLUT import (
-    GLUT_DOUBLE,
-    GLUT_ELAPSED_TIME,
-    GLUT_RGB,
-    glutCreateWindow,
-    glutDisplayFunc,
-    glutGet,
-    glutIdleFunc,
-    glutInit,
-    glutInitDisplayMode,
-    glutInitWindowSize,
-    glutMainLoop,
-    glutPostRedisplay,
-    glutReshapeFunc,
-    glutSwapBuffers,
 )
 from PIL import Image
 
@@ -266,7 +251,6 @@ def display():
     glCallList(picture_display_lists[current_mosaic_picture])
 
     glPopMatrix()
-    glutSwapBuffers()
 
 
 def spin_display():
@@ -274,9 +258,9 @@ def spin_display():
     global current_mosaic_picture
     global start_picture_coord
     global start_orientation
-    duration = args.duration * 1000.0
+    duration = args.duration
     old_progress = progress
-    progress = (glutGet(GLUT_ELAPSED_TIME) % duration) / duration
+    progress = (glfw.get_time() % duration) / duration
     if progress < old_progress:
         current_tile_picture = current_mosaic_picture
         start_orientation = current_mosaic_picture.orientation
@@ -287,7 +271,6 @@ def spin_display():
                 current_mosaic_picture, args.tiles, args.reuse
             ),
         )
-    glutPostRedisplay()
 
 
 def init():
@@ -310,7 +293,7 @@ def init():
     glShadeModel(GL_FLAT)
 
 
-def reshape(w, h):
+def reshape(window, w, h):
     glViewport(0, 0, w, h)
     ratio = float(w) / h
     glMatrixMode(GL_PROJECTION)
@@ -349,15 +332,23 @@ def main():
         mosaic_factory.cached_mosaic(current_mosaic_picture, args.tiles, args.reuse),
     )
 
-    glutInit(sys.argv)
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-    glutInitWindowSize(640, 480)
-    glutCreateWindow("Mosaic for {}".format(args.folder))
+    if not glfw.init():
+        return
+    window = glfw.create_window(640, 480, "Mosaic for {}".format(args.folder), None, None)
+    if not window:
+        glfw.terminate()
+        return
+    glfw.make_context_current(window)
     init()
-    glutDisplayFunc(display)
-    glutReshapeFunc(reshape)
-    glutIdleFunc(spin_display)
-    glutMainLoop()
+    reshape(window, 640, 480)
+    glfw.set_window_size_callback(window, reshape);
+
+    while not glfw.window_should_close(window):
+        spin_display()
+        display()
+        glfw.swap_buffers(window)
+        glfw.poll_events()
+    glfw.terminate()
 
 
 if __name__ == "__main__":
