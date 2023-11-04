@@ -7,6 +7,10 @@ Displays pictures made of other pictures.
 A video explains it better than a thousand words:
 
 
+https://github.com/zvin/mosaic/assets/180331/41ff8d8a-1d4d-4335-bfe0-c546e282d898
+
+
+
 ## Installing
 
 ```sh
