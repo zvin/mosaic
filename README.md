@@ -5,6 +5,7 @@
 Displays pictures made of other pictures.
 
 A video explains it better than a thousand words:
+
 [video.webm](https://github.com/zvin/mosaic/assets/180331/710b6af5-8193-45f4-be4c-5c9399664e6e)
 
 ## Installing
